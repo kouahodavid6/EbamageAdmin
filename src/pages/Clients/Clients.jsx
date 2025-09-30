@@ -89,7 +89,7 @@ const Clients = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-blue-50/30 to-emerald-50/50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-emerald-50/30 to-emerald-50/50 flex flex-col md:flex-row">
       {/* Overlay mobile */}
       {sidebarOpen && (
         <div
@@ -142,20 +142,20 @@ const Clients = () => {
             transition={{ duration: 0.6 }}
           >
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-blue-900 mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold text-emerald-900 mb-2">
                 Gestion des clients
               </h1>
-              <p className="text-blue-600/80">
+              <p className="text-emerald-600/80">
                 Gérez les clients partenaires de votre plateforme
               </p>
             </div>
             {loading ? (
               <div className="flex items-center gap-2">
-                <div className="w-24 h-6 bg-blue-200 rounded animate-pulse"></div>
+                <div className="w-24 h-6 bg-emerald-200 rounded animate-pulse"></div>
               </div>
             ) : (
               <motion.div 
-                className="flex items-center gap-2 text-blue-600/80 bg-white/60 backdrop-blur-sm rounded-2xl px-4 py-2 border border-blue-100/60"
+                className="flex items-center gap-2 text-emerald-600/80 bg-white/60 backdrop-blur-sm rounded-2xl px-4 py-2 border border-emerald-100/60"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -168,7 +168,7 @@ const Clients = () => {
 
           {/* Barre de recherche et filtres */}
           <motion.div 
-            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/60 p-6"
+            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
@@ -177,14 +177,14 @@ const Clients = () => {
               {/* Barre de recherche */}
               <div className="relative flex-1 min-w-0">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="text-blue-400 w-5 h-5" />
+                  <Search className="text-emerald-400 w-5 h-5" />
                 </div>
                 <motion.input
                   type="text"
                   placeholder="Rechercher un client par nom, email ou téléphone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all duration-300 bg-white/50"
+                  className="block w-full pl-10 pr-4 py-3 border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 transition-all duration-300 bg-white/50"
                   whileFocus={{ scale: 1.01 }}
                   disabled={loading}
                 />
@@ -192,7 +192,7 @@ const Clients = () => {
 
               {/* Bouton Filtres */}
               <motion.button
-                className="flex-shrink-0 flex items-center justify-center gap-2 px-6 py-3 border border-blue-300 rounded-xl hover:bg-blue-50 transition-all duration-300 whitespace-nowrap font-medium text-blue-700"
+                className="flex-shrink-0 flex items-center justify-center gap-2 px-6 py-3 border border-emerald-300 rounded-xl hover:bg-emerald-50 transition-all duration-300 whitespace-nowrap font-medium text-emerald-700"
                 style={{ height: "48px" }}
                 variants={buttonVariants}
                 whileHover="hover"
@@ -217,22 +217,22 @@ const Clients = () => {
               {Array(skeletonCount).fill(0).map((_, index) => (
                 <motion.div
                   key={index}
-                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/60 overflow-hidden"
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 overflow-hidden"
                   variants={itemVariants}
                 >
                   {/* En-tête de la carte en loading */}
                   <div className="p-6 pb-4">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="flex items-center justify-center rounded-2xl p-3 bg-blue-200 border border-blue-300 animate-pulse">
+                        <div className="flex items-center justify-center rounded-2xl p-3 bg-emerald-200 border border-emerald-300 animate-pulse">
                           <div className="w-6 h-6"></div>
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="h-6 bg-blue-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                          <div className="h-6 bg-emerald-200 rounded w-3/4 mb-2 animate-pulse"></div>
                           <div className="flex items-center gap-1 mt-1">
-                            <div className="w-3 h-3 bg-blue-200 rounded animate-pulse"></div>
-                            <div className="h-4 bg-blue-200 rounded w-1/2 animate-pulse"></div>
+                            <div className="w-3 h-3 bg-emerald-200 rounded animate-pulse"></div>
+                            <div className="h-4 bg-emerald-200 rounded w-1/2 animate-pulse"></div>
                           </div>
                         </div>
                       </div>
@@ -243,22 +243,22 @@ const Clients = () => {
                   <div className="px-6 pb-6">
                     <div className="space-y-3 mb-4">
                       {/* Email loading */}
-                      <div className="flex items-center space-x-2 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
-                        <div className="w-4 h-4 bg-blue-200 rounded animate-pulse"></div>
-                        <div className="h-4 bg-blue-200 rounded w-full animate-pulse"></div>
+                      <div className="flex items-center space-x-2 p-2 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                        <div className="w-4 h-4 bg-emerald-200 rounded animate-pulse"></div>
+                        <div className="h-4 bg-emerald-200 rounded w-full animate-pulse"></div>
                       </div>
 
                       {/* Date loading */}
-                      <div className="flex items-center space-x-2 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
-                        <div className="w-4 h-4 bg-blue-200 rounded animate-pulse"></div>
-                        <div className="h-4 bg-blue-200 rounded w-2/3 animate-pulse"></div>
+                      <div className="flex items-center space-x-2 p-2 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                        <div className="w-4 h-4 bg-emerald-200 rounded animate-pulse"></div>
+                        <div className="h-4 bg-emerald-200 rounded w-2/3 animate-pulse"></div>
                       </div>
                     </div>
 
                     {/* Actions loading */}
-                    <div className="flex gap-2 pt-4 border-t border-blue-100">
-                      <div className="flex-1 py-2 bg-blue-200 rounded animate-pulse"></div>
-                      <div className="flex-1 py-2 bg-blue-300 rounded animate-pulse"></div>
+                    <div className="flex gap-2 pt-4 border-t border-emerald-100">
+                      <div className="flex-1 py-2 bg-emerald-200 rounded animate-pulse"></div>
+                      <div className="flex-1 py-2 bg-emerald-300 rounded animate-pulse"></div>
                     </div>
                   </div>
                 </motion.div>
@@ -266,16 +266,16 @@ const Clients = () => {
             </motion.div>
           ) : filteredClients.length === 0 ? (
             <motion.div 
-              className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/60"
+              className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <User className="w-16 h-16 text-blue-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">
+              <User className="w-16 h-16 text-emerald-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-emerald-900 mb-2">
                 {searchTerm ? "Aucun client trouvé" : "Aucun client disponible"}
               </h3>
-              <p className="text-blue-600/70">
+              <p className="text-emerald-600/70">
                 {searchTerm 
                   ? "Essayez de modifier vos critères de recherche" 
                   : "Les clients apparaîtront ici une fois inscrits"
@@ -292,7 +292,7 @@ const Clients = () => {
               {filteredClients.map((client, index) => (
                 <motion.div 
                   key={client.hashid}
-                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/60 overflow-hidden group"
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 overflow-hidden group"
                   variants={itemVariants}
                   whileHover="hover"
                 >
@@ -308,7 +308,7 @@ const Clients = () => {
                           return (
                             <div className="relative">
                               <motion.div 
-                                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
+                                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
                                 whileHover={{ scale: 1.1, rotate: 5 }}
                                 transition={{ duration: 0.2 }}
                               >
@@ -316,7 +316,7 @@ const Clients = () => {
                               </motion.div>
 
                               {/* Petit badge User */}
-                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white">
                                 <User className="w-2 h-2 text-white" />
                               </div>
                             </div>
@@ -324,12 +324,12 @@ const Clients = () => {
                         })()}
 
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-blue-900 text-lg truncate">
+                          <h3 className="font-semibold text-emerald-900 text-lg truncate">
                             {client.nom_clt}
                           </h3>
                           <div className="flex items-center gap-1 mt-1">
-                            <Phone className="w-3 h-3 text-blue-500" />
-                            <p className="text-sm text-blue-600/80">
+                            <Phone className="w-3 h-3 text-emerald-500" />
+                            <p className="text-sm text-emerald-600/80">
                               {client.tel_clt}
                             </p>
                           </div>
@@ -343,41 +343,41 @@ const Clients = () => {
                     <div className="space-y-3 mb-4">
                       {/* Email */}
                       <motion.div 
-                        className="flex items-center space-x-2 text-sm text-blue-700 p-2 bg-blue-50/50 rounded-lg border border-blue-100"
+                        className="flex items-center space-x-2 text-sm text-emerald-700 p-2 bg-emerald-50/50 rounded-lg border border-emerald-100"
                         whileHover={{ x: 5 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <Mail className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <Mail className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                         <span className="truncate">{client.email_clt}</span>
                       </motion.div>
 
                       {/* Date d'inscription */}
                       <motion.div 
-                        className="flex items-center space-x-2 text-sm text-blue-700 p-2 bg-blue-50/50 rounded-lg border border-blue-100"
+                        className="flex items-center space-x-2 text-sm text-emerald-700 p-2 bg-emerald-50/50 rounded-lg border border-emerald-100"
                         whileHover={{ x: 5 }}
                         transition={{ duration: 0.2, delay: 0.1 }}
                       >
-                        <Calendar className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <Calendar className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                         <span>Inscrit le {formatDate(client.created_at)}</span>
                       </motion.div>
                     </div>
 
                     {/* Actions */}
                     <motion.div 
-                      className="flex gap-2 pt-4 border-t border-blue-100"
+                      className="flex gap-2 pt-4 border-t border-emerald-100"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 + (index * 0.1) }}
                     >
                       <motion.button
-                        className="flex-1 py-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-300 hover:bg-blue-50 rounded-lg"
+                        className="flex-1 py-2 text-emerald-600 hover:text-emerald-700 font-medium text-sm transition-colors duration-300 hover:bg-emerald-50 rounded-lg"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
                         Profil
                       </motion.button>
                       <motion.button
-                        className="flex-1 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg hover:from-blue-600 hover:to-blue-600 font-medium text-sm transition-all duration-300 shadow-lg shadow-blue-500/25"
+                        className="flex-1 py-2 bg-gradient-to-r from-emerald-500 to-emerald-500 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-600 font-medium text-sm transition-all duration-300 shadow-lg shadow-blue-500/25"
                         variants={buttonVariants}
                         whileHover="hover"
                         whileTap="tap"

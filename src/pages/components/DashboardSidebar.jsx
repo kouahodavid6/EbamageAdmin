@@ -87,18 +87,18 @@ const DashboardSidebar = () => {
     return (
         <>
             <div className="h-screen w-64 bg-gradient-to-b from-white to-emerald-50/80 text-emerald-700 fixed left-0 top-0 z-30 border-r border-emerald-100/60 backdrop-blur-sm shadow-xl">
-        {/* Logo en haut du menu */}
-        <div className="px-6 py-4 border-b border-emerald-100">
-            <Link
-                to="/dashboard-boutique"
-                className="flex items-center space-x-2"
-            >
-                <div>
-                    <Store className="h-8 w-8 text-emerald-500" />
+                {/* Logo en haut du menu */}
+                <div className="px-6 py-4 border-b border-emerald-100">
+                    <Link
+                        to="/dashboard-boutique"
+                        className="flex items-center space-x-2"
+                    >
+                        <div>
+                            <Store className="h-8 w-8 text-emerald-500" />
+                        </div>
+                        <div className="font-bold text-xl text-emerald-800">Ebamage</div>
+                    </Link>
                 </div>
-                <div className="font-bold text-xl text-emerald-800">Ebamage</div>
-            </Link>
-        </div>
 
                 {/* Liens de navigation */}
                 <div className="py-4 px-6">
