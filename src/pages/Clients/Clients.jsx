@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
-import { Search, Filter, Store, Mail, Calendar } from "lucide-react";
+import { Search, Filter, User, Mail, Calendar, Phone, MapPin, CreditCard, Star } from "lucide-react";
 import useClientStore from "../../stores/client.store";
 import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
+import { motion } from "framer-motion";
 
 const Clients = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,46 +23,94 @@ const Clients = () => {
       client.tel_clt.includes(searchTerm)
   );
 
+  const skeletonCount = clients?.length > 0 ? clients.length : 3;
+
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return format(date, "dd/MM/yyyy", { locale: fr });
+    return format(date, "dd/MM/yyyy HH:mm", { locale: fr });
   };
 
-  if (loading)
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        Chargement...
-      </div>
-    );
+  // Animations
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    },
+    hover: {
+      y: -6,
+      boxShadow: "0 20px 40px rgba(16, 185, 129, 0.12)",
+      transition: { duration: 0.3 }
+    }
+  };
+
+  const buttonVariants = {
+    hover: { scale: 1.05, transition: { duration: 0.2 } },
+    tap: { scale: 0.95, transition: { duration: 0.1 } }
+  };
+
+  // Composant de loading spinner
+  const LoadingSpinner = () => (
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+      className="h-8 w-8 rounded-full border-t-2 border-b-2 border-teal-500"
+    />
+  );
+
   if (error)
     return (
-      <div className="flex-1 flex items-center justify-center text-red-500">
-        Erreur: {error}
-      </div>
+      <motion.div 
+        className="flex-1 flex items-center justify-center p-8"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl text-center max-w-md">
+          <p className="font-semibold mb-2">Erreur de chargement</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      </motion.div>
     );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-blue-50/30 to-emerald-50/50 flex flex-col md:flex-row">
+      {/* Overlay mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed md:sticky top-0 z-40 transition-transform duration-300 ease-in-out
+        className={`fixed md:sticky top-0 z-50 transition-transform duration-300 ease-in-out
                 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-                md:translate-x-0 w-64 h-screen bg-white shadow-md`}>
-        <div className="md:hidden flex justify-end p-4">
+                md:translate-x-0 w-64 h-screen`}>
+        <div className="md:hidden flex justify-end p-4 absolute top-0 right-0 z-50">
           <button
             onClick={() => setSidebarOpen(false)}
-            className="text-gray-500 hover:text-gray-800 transition"
+            className="text-teal-600 hover:text-teal-800 transition-all duration-300 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-lg"
             aria-label="Fermer la sidebar">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
+              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -80,103 +129,267 @@ const Clients = () => {
       {/* Main */}
       <div className="flex-1 min-w-0 flex flex-col">
         <DashboardHeader
-          title="CLients"
+          title="Clients"
           toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 overflow-auto bg-gray-100 space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-transparent space-y-6">
+          {/* En-tête avec stats */}
+          <motion.div 
+            className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+          >
             <div>
-              <h1 className="text-xl xs:text-2xl sm:text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl md:text-3xl font-bold text-blue-900 mb-2">
                 Gestion des clients
               </h1>
-              <p className="text-gray-600 mt-1 text-xs xs:text-sm sm:text-base">
+              <p className="text-blue-600/80">
                 Gérez les clients partenaires de votre plateforme
               </p>
             </div>
-          </div>
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-6 bg-blue-200 rounded animate-pulse"></div>
+              </div>
+            ) : (
+              <motion.div 
+                className="flex items-center gap-2 text-blue-600/80 bg-white/60 backdrop-blur-sm rounded-2xl px-4 py-2 border border-blue-100/60"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <User className="w-5 h-5" />
+                <span className="font-medium">{clients.length} client{clients.length !== 1 ? 's' : ''}</span>
+              </motion.div>
+            )}
+          </motion.div>
 
-          {/* Barre de recherche */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch">
+          {/* Barre de recherche et filtres */}
+          <motion.div 
+            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/60 p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch">
               {/* Barre de recherche */}
               <div className="relative flex-1 min-w-0">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="text-gray-400 w-5 h-5" />
+                  <Search className="text-blue-400 w-5 h-5" />
                 </div>
-                <input
+                <motion.input
                   type="text"
-                  placeholder="Rechercher un client..."
+                  placeholder="Rechercher un client par nom, email ou téléphone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all duration-300 bg-white/50"
+                  whileFocus={{ scale: 1.01 }}
+                  disabled={loading}
                 />
               </div>
 
-              {/* Bouton Filtres - toujours aligné */}
-              <button
-                className="flex-shrink-0 flex items-center justify-center space-x-2 px-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
-                style={{ height: "42px" }} // Hauteur fixe correspondant à l'input
+              {/* Bouton Filtres */}
+              <motion.button
+                className="flex-shrink-0 flex items-center justify-center gap-2 px-6 py-3 border border-blue-300 rounded-xl hover:bg-blue-50 transition-all duration-300 whitespace-nowrap font-medium text-blue-700"
+                style={{ height: "48px" }}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                disabled={loading}
               >
-                <Filter className="w-5 h-5 flex-shrink-0" />
-                <span className="hidden xs:inline">Filtres</span>
-              </button>
+                <Filter className="w-5 h-5" />
+                <span>Filtres</span>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredClients.map((client) => (
-              <div
-                key={client.hashid}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                <div className="p-6 pb-0">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={client.image_clt}
-                        alt={client.image_clt}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
+          {/* Grille des clients */}
+          {loading ? (
+            // Loading state pour la grille clients
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {Array(skeletonCount).fill(0).map((_, index) => (
+                <motion.div
+                  key={index}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/60 overflow-hidden"
+                  variants={itemVariants}
+                >
+                  {/* En-tête de la carte en loading */}
+                  <div className="p-6 pb-4">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-center rounded-2xl p-3 bg-blue-200 border border-blue-300 animate-pulse">
+                          <div className="w-6 h-6"></div>
+                        </div>
 
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {client.nom_clt}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {client.tel_clt}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="h-6 bg-blue-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <div className="w-3 h-3 bg-blue-200 rounded animate-pulse"></div>
+                            <div className="h-4 bg-blue-200 rounded w-1/2 animate-pulse"></div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="px-6 pb-6">
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <Mail className="w-4 h-4" />
-                      <span>{client.email_clt}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>
-                        Client depuis le {formatDate(client.created_at)}
-                      </span>
+                  {/* Contenu de la carte en loading */}
+                  <div className="px-6 pb-6">
+                    <div className="space-y-3 mb-4">
+                      {/* Email loading */}
+                      <div className="flex items-center space-x-2 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
+                        <div className="w-4 h-4 bg-blue-200 rounded animate-pulse"></div>
+                        <div className="h-4 bg-blue-200 rounded w-full animate-pulse"></div>
+                      </div>
+
+                      {/* Date loading */}
+                      <div className="flex items-center space-x-2 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
+                        <div className="w-4 h-4 bg-blue-200 rounded animate-pulse"></div>
+                        <div className="h-4 bg-blue-200 rounded w-2/3 animate-pulse"></div>
+                      </div>
                     </div>
 
-                    <div className="text-center p-3 bg-gray-100 rounded-lg">
-                      <div className="flex items-center justify-center mb-1">
-                        <Store className="w-5 h-5 text-gray-500 mr-1" />
-                      </div>
-                      <div className="text-lg font-semibold text-gray-900">
-                        {client.solde_tdl.toLocaleString("fr-FR")} FCFA
-                      </div>
-                      <div className="text-xs text-gray-500">Solde TDL</div>
+                    {/* Actions loading */}
+                    <div className="flex gap-2 pt-4 border-t border-blue-100">
+                      <div className="flex-1 py-2 bg-blue-200 rounded animate-pulse"></div>
+                      <div className="flex-1 py-2 bg-blue-300 rounded animate-pulse"></div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : filteredClients.length === 0 ? (
+            <motion.div 
+              className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/60"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <User className="w-16 h-16 text-blue-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                {searchTerm ? "Aucun client trouvé" : "Aucun client disponible"}
+              </h3>
+              <p className="text-blue-600/70">
+                {searchTerm 
+                  ? "Essayez de modifier vos critères de recherche" 
+                  : "Les clients apparaîtront ici une fois inscrits"
+                }
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {filteredClients.map((client, index) => (
+                <motion.div 
+                  key={client.hashid}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/60 overflow-hidden group"
+                  variants={itemVariants}
+                  whileHover="hover"
+                >
+                  {/* En-tête de la carte */}
+                  <div className="p-6 pb-4">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        {/* Avatar avec initiale */}
+                        {(() => {
+                          const nom = client?.nom_clt?.toUpperCase() || "Client";
+                          const initiale = nom.charAt(0);
+
+                          return (
+                            <div className="relative">
+                              <motion.div 
+                                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center text-white font-semibold shadow-lg group-hover:shadow-xl transition-all duration-300"
+                                whileHover={{ scale: 1.1, rotate: 5 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                {initiale || <User className="w-6 h-6" />}
+                              </motion.div>
+
+                              {/* Petit badge User */}
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                                <User className="w-2 h-2 text-white" />
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-blue-900 text-lg truncate">
+                            {client.nom_clt}
+                          </h3>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Phone className="w-3 h-3 text-blue-500" />
+                            <p className="text-sm text-blue-600/80">
+                              {client.tel_clt}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contenu de la carte */}
+                  <div className="px-6 pb-6">
+                    <div className="space-y-3 mb-4">
+                      {/* Email */}
+                      <motion.div 
+                        className="flex items-center space-x-2 text-sm text-blue-700 p-2 bg-blue-50/50 rounded-lg border border-blue-100"
+                        whileHover={{ x: 5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Mail className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <span className="truncate">{client.email_clt}</span>
+                      </motion.div>
+
+                      {/* Date d'inscription */}
+                      <motion.div 
+                        className="flex items-center space-x-2 text-sm text-blue-700 p-2 bg-blue-50/50 rounded-lg border border-blue-100"
+                        whileHover={{ x: 5 }}
+                        transition={{ duration: 0.2, delay: 0.1 }}
+                      >
+                        <Calendar className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <span>Inscrit le {formatDate(client.created_at)}</span>
+                      </motion.div>
+                    </div>
+
+                    {/* Actions */}
+                    <motion.div 
+                      className="flex gap-2 pt-4 border-t border-blue-100"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 + (index * 0.1) }}
+                    >
+                      <motion.button
+                        className="flex-1 py-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-300 hover:bg-blue-50 rounded-lg"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Profil
+                      </motion.button>
+                      <motion.button
+                        className="flex-1 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg hover:from-blue-600 hover:to-blue-600 font-medium text-sm transition-all duration-300 shadow-lg shadow-blue-500/25"
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        Historique
+                      </motion.button>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </main>
       </div>
     </div>

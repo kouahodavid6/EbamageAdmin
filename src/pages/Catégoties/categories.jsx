@@ -4,7 +4,8 @@ import DashboardHeader from "../components/DashboardHeader";
 import useCategorieStore from "../../stores/categorie.store";
 import RegisterCategorieModal from "./components/RegisterCategorieModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import { Plus, Search, Filter, FolderOpen, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, FolderOpen, Edit, Trash2, Layers, Tag } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Categories = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,7 +16,7 @@ const Categories = () => {
     const [deleting, setDeleting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
-    const { categories, fetchCategories, deleteCategorie, error } = useCategorieStore();
+    const { categories, fetchCategories, deleteCategorie, error, loading } = useCategorieStore();
 
     useEffect(() => {
         fetchCategories();
@@ -30,42 +31,69 @@ const Categories = () => {
         setCategoryToDelete(null);
     };
 
-    // Fonction de filtrage des catégories
     const filteredCategories = categories.filter((category) =>
         category.nom_categorie.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Animations
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.2
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { duration: 0.5, ease: "easeOut" }
+        },
+        hover: {
+            y: -6,
+            boxShadow: "0 20px 40px rgba(16, 185, 129, 0.15)",
+            transition: { duration: 0.3 }
+        }
+    };
+
+    const buttonVariants = {
+        hover: { scale: 1.05, transition: { duration: 0.2 } },
+        tap: { scale: 0.95, transition: { duration: 0.1 } }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50/30 to-green-50/50 flex flex-col md:flex-row">
             {/* Overlay mobile */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden"
+                    className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
             <div
-                className={`fixed md:sticky top-0 z-40 transition-transform duration-300 ease-in-out
+                className={`fixed md:sticky top-0 z-50 transition-transform duration-300 ease-in-out
                     ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-                    md:translate-x-0 w-64 h-screen bg-white shadow-md`}
+                    md:translate-x-0 w-64 h-screen`}
             >
-                {/* Croix mobile */}
-                <div className="md:hidden flex justify-end p-4">
+                <div className="md:hidden flex justify-end p-4 absolute top-0 right-0 z-50">
                     <button
                         onClick={() => setSidebarOpen(false)}
-                        className="text-gray-500 hover:text-gray-800 transition"
+                        className="text-emerald-600 hover:text-emerald-800 transition-all duration-300 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-lg"
                         aria-label="Fermer la sidebar"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                         >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
-
                 <DashboardSidebar/>
             </div>
 
@@ -76,124 +104,208 @@ const Categories = () => {
                     toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
                 />
 
-                <main className="flex-1 p-4 sm:p-6 overflow-auto bg-gray-50 w-full space-y-6">
+                <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-transparent space-y-6">
                     {/* Header */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <motion.div 
+                        className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.6 }}
+                    >
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestion des catégories</h1>
-                            <p className="text-gray-600 mt-1 text-sm sm:text-base">
+                            <h1 className="text-2xl md:text-3xl font-bold text-emerald-900 mb-2">
+                                Gestion des catégories
+                            </h1>
+                            <p className="text-emerald-600/80">
                                 Organisez vos produits par catégories
                             </p>
                         </div>
-                        <button
+                        <motion.button
                             onClick={() => {
                                 setEditingCategory(null);
                                 setShowAddModal(true);
                             }}
-                            className="bg-pink-500 hover:bg-pink-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center space-x-2 transition-colors w-full sm:w-auto justify-center"
+                            className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-6 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 shadow-lg shadow-emerald-500/25 w-full lg:w-auto justify-center"
+                            variants={buttonVariants}
+                            whileHover="hover"
+                            whileTap="tap"
                         >
-                            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span className="text-sm sm:text-base">Nouvelle catégorie</span>
-                        </button>
-                    </div>
+                            <Plus className="w-5 h-5" />
+                            <span className="font-medium">Nouvelle catégorie</span>
+                        </motion.button>
+                    </motion.div>
 
                     {/* Barre de recherche */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch">
-                            {/* Barre de recherche */}
+                    <motion.div 
+                        className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                    >
+                        <div className="flex flex-col sm:flex-row gap-4 items-stretch">
                             <div className="relative flex-1 min-w-0">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search className="text-gray-400 w-5 h-5" />
+                                    <Search className="text-emerald-400 w-5 h-5" />
                                 </div>
-                                <input
+                                <motion.input
                                     type="text"
                                     placeholder="Rechercher une catégorie..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="block w-full pl-10 pr-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                    className="block w-full pl-10 pr-4 py-3 border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 transition-all duration-300 bg-white/50"
+                                    whileFocus={{ scale: 1.01 }}
                                 />
                             </div>
 
-                            {/* Bouton Filtres - toujours aligné */}
-                            <button 
-                                className="flex-shrink-0 flex items-center justify-center space-x-2 px-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
-                                style={{ height: '42px' }}
+                            <motion.button 
+                                className="flex-shrink-0 flex items-center justify-center gap-2 px-6 py-3 border border-emerald-300 rounded-xl hover:bg-emerald-50 transition-all duration-300 whitespace-nowrap font-medium text-emerald-700"
+                                style={{ height: '48px' }}
+                                variants={buttonVariants}
+                                whileHover="hover"
+                                whileTap="tap"
                             >
-                                <Filter className="w-5 h-5 flex-shrink-0" />
-                                <span className="hidden xs:inline">Filtres</span>
-                            </button>
+                                <Filter className="w-5 h-5" />
+                                <span>Filtres</span>
+                            </motion.button>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Affichage des erreurs */}
                     {error && (
-                        <p className="text-center text-red-600 font-medium mb-4 text-sm sm:text-base">{error}</p>
+                        <motion.div 
+                            className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl text-center"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                        >
+                            <p className="font-medium">{error}</p>
+                        </motion.div>
                     )}
 
                     {/* Message si aucune catégorie trouvée */}
-                    {filteredCategories.length === 0 && (
-                        <div className="text-center py-8">
-                            <p className="text-gray-500">
-                                {searchTerm ? 
-                                    "Aucune catégorie ne correspond à votre recherche" : 
-                                    "Aucune catégorie disponible"}
+                    {!loading && filteredCategories.length === 0 && (
+                        <motion.div 
+                            className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                        >
+                            <Layers className="w-16 h-16 text-emerald-300 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-emerald-900 mb-2">
+                                {searchTerm ? "Aucune catégorie trouvée" : "Aucune catégorie disponible"}
+                            </h3>
+                            <p className="text-emerald-600/70">
+                                {searchTerm 
+                                    ? "Essayez de modifier vos critères de recherche" 
+                                    : "Commencez par créer votre première catégorie"
+                                }
                             </p>
-                        </div>
+                        </motion.div>
                     )}
 
                     {/* Grille de catégories */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        {filteredCategories.map((category) => (
-                            <div
-                                key={category.id || category.hashid}
-                                className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-                            >
-                                <div className="h-40 sm:h-48 overflow-hidden">
-                                    <img
-                                        src={category.image_categorie}
-                                        alt={category.nom_categorie}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            e.target.src = "https://via.placeholder.com/300x200?text=Image+manquante";
-                                        }}
-                                    />
-                                </div>
-                                <div className="p-4 sm:p-6">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                                            {category.nom_categorie}
-                                        </h3>
-                                        <FolderOpen className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs sm:text-sm text-gray-500">
-                                            {category.productCount || 0} produits
-                                        </span>
-                                        <div className="flex items-center space-x-1 sm:space-x-2">
-                                            <button
-                                                onClick={() => {
-                                                    setEditingCategory(category);
-                                                    setShowAddModal(true);
-                                                }}
-                                                className="p-1 sm:p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                                            >
-                                                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setCategoryToDelete(category);
-                                                    setShowDeleteModal(true);
-                                                }}
-                                                className="p-1 sm:p-2 text-gray-400 hover:text-red-600 transition-colors"
-                                            >
-                                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                            </button>
+                    <motion.div 
+                        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        {loading
+                            ? Array(categories?.length || 6).fill(0).map((_, index) => (
+                                <motion.div
+                                    key={index}
+                                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 overflow-hidden animate-pulse"
+                                    variants={itemVariants}
+                                >
+                                    {/* Skeleton header */}
+                                    <div className="h-48 bg-emerald-200/50 w-full animate-pulse" />
+
+                                    {/* Skeleton contenu */}
+                                    <div className="p-6 space-y-3">
+                                        <div className="h-6 bg-emerald-200 rounded w-3/4 animate-pulse"></div>
+                                        <div className="h-4 bg-emerald-200 rounded w-1/2 animate-pulse"></div>
+                                        <div className="flex gap-2 mt-4">
+                                            <div className="flex-1 h-8 bg-emerald-200 rounded animate-pulse"></div>
+                                            <div className="flex-1 h-8 bg-emerald-300 rounded animate-pulse"></div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                                </motion.div>
+                            ))
+                            : filteredCategories.map((category) => (
+                                <motion.div
+                                    key={category.id || category.hashid}
+                                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 overflow-hidden group"
+                                    variants={itemVariants}
+                                    whileHover="hover"
+                                >
+                                    {/* Image de la catégorie */}
+                                    <div className="h-48 relative overflow-hidden">
+                                        <img
+                                            src={category.image_categorie}
+                                            alt={category.nom_categorie}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            onError={(e) => {
+                                                e.target.src = "https://via.placeholder.com/300x200/ecfdf5/10b981?text=Image+manquante";
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        
+                                        {/* Badge produit */}
+                                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 shadow-lg">
+                                            <Tag className="w-3 h-3 text-emerald-600" />
+                                            <span className="text-xs font-medium text-emerald-700">
+                                                {category.productCount || 0} produit{category.productCount !== 1 ? 's' : ''}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Contenu de la carte */}
+                                    <div className="p-6">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <h3 className="text-lg font-semibold text-emerald-900 group-hover:text-gray-800 transition-colors">
+                                                {category.nom_categorie}
+                                            </h3>
+                                            <motion.div
+                                                whileHover={{ rotate: 15, scale: 1.1 }}
+                                                transition={{ duration: 0.2 }}
+                                            >
+                                                <FolderOpen className="w-5 h-5 text-emerald-400 group-hover:text-gray-500 transition-colors" />
+                                            </motion.div>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-emerald-100">
+                                            <span className="text-sm text-emerald-600/70">
+                                                {category.productCount || 0} produit{category.productCount !== 1 ? 's' : ''}
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <motion.button
+                                                    onClick={() => {
+                                                        setEditingCategory(category);
+                                                        setShowAddModal(true);
+                                                    }}
+                                                    className="p-2 text-emerald-400 group-hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-300"
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </motion.button>
+                                                <motion.button
+                                                    onClick={() => {
+                                                        setCategoryToDelete(category);
+                                                        setShowDeleteModal(true);
+                                                    }}
+                                                    className="p-2 text-emerald-400 group-hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-300"
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </motion.button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))
+                        }
+                    </motion.div>
                 </main>
             </div>
 
