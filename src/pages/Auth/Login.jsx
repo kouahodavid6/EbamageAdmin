@@ -1,22 +1,24 @@
 import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/Input";
-import { ArrowLeft, Store, AlertCircle } from "lucide-react";
+import { Shield, AlertCircle, Lock } from "lucide-react";
 import { useState } from "react";
 import useAuthStore from "../../stores/auth.store";
 import ContainerForms from "./components/ContainerForms";
+import { motion } from "framer-motion";
 
-const LoginBoutique = () => {
+const Login = () => {
     const [formData, setFormData] = useState({
-        email_btq: "",
-        password_btq: "",
+        email: "",
+        password: "",
     });
 
-    const { loginBoutique, error, clearError, loading } = useAuthStore();
+    const { login, error, clearError, loading } = useAuthStore();
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+        clearError();
     };
 
     const handleSubmit = async (e) => {
@@ -24,122 +26,186 @@ const LoginBoutique = () => {
         clearError();
 
         try {
-            const res = await loginBoutique(formData);
+            const res = await login(formData);
             console.log("Connexion réussie :", res);
-
-            navigate("/dashboard-boutique");
+            navigate("/dashboard");
         } catch (error) {
             console.error("Erreur lors de la connexion :", error);
+        }
+    };
+
+    // Variants d'animation
+    const buttonVariants = {
+        hover: {
+            scale: 1.05,
+            transition: { duration: 0.2 }
+        },
+        tap: {
+            scale: 0.95,
+            transition: { duration: 0.1 }
+        }
+    };
+
+    const inputVariants = {
+        focus: {
+            scale: 1.02,
+            transition: { duration: 0.2 }
         }
     };
 
     return (
         <ContainerForms>
             {/* HEADER */}
-            <div className="w-full flex items-center justify-between py-4 px-1">
-                <Link
-                    to="/"
-                    className="rounded-full p-1 flex items-center justify-center transition-colors bg-neutral-500 hover:bg-neutral-800"
+            <motion.div 
+                className="w-full flex flex-col items-center py-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+            >
+                <motion.div
+                    className="bg-gradient-to-br from-emerald-100 to-green-100 p-4 rounded-2xl mb-4 shadow-lg"
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
                 >
-                    <ArrowLeft className="h-6 w-6 text-white" />
-                </Link>
-                <h2 className="text-xl sm:text-3xl font-bold text-gray-900 text-center">
-                    Connexion Boutique
+                    <Shield className="h-8 w-8 text-emerald-600" />
+                </motion.div>
+                <h2 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-700 to-green-600 bg-clip-text text-transparent text-center mb-2">
+                    Administration
                 </h2>
-                <Store className="h-7 w-7 text-pink-400" />
-            </div>
-
-            {/* SOUS-TITRE */}
-            <p className="text-sm text-gray-600 text-center mb-6 px-4 sm:px-8">
-                Reprenons là où vous vous êtes arrêté avec TDL.
-            </p>
+                <p className="text-emerald-600/80 text-center text-sm font-medium">
+                    Accès sécurisé à l'espace administrateur
+                </p>
+            </motion.div>
 
             {/* FORMULAIRE */}
-            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            <motion.form 
+                onSubmit={handleSubmit} 
+                className="mt-8 space-y-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+            >
                 {/* Email */}
                 <div>
-                    <label htmlFor="email_btq" className="block text-sm font-medium text-gray-700 mb-1">
-                        Email <span className="text-red-500">*</span>
+                    <label htmlFor="email" className="block text-sm font-semibold text-emerald-800 mb-2">
+                        Email administrateur <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                        type="email"
-                        id="email_btq"
-                        name="email_btq"
-                        value={formData.email_btq}
-                        onChange={handleChange}
-                        placeholder="contact@ma-boutique.com"
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${
-                            error?.email_btq ? "border-red-500" : "border-gray-300"
-                        }`}
-                        required
-                    />
-                    {error?.email_btq && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center">
-                            <AlertCircle className="w-4 h-4 mr-1" />
-                            {error.email_btq}
-                        </p>
-                    )}
+                    <motion.div whileFocus="focus" variants={inputVariants}>
+                        <Input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="admin@ebamage.com"
+                            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-3 transition-all duration-300 ${
+                                error 
+                                    ? "border-red-300 bg-red-50 focus:ring-red-200" 
+                                    : "border-emerald-200 focus:ring-emerald-200 focus:border-emerald-400"
+                            }`}
+                            required
+                        />
+                    </motion.div>
                 </div>
 
                 {/* Password */}
                 <div>
-                    <label htmlFor="password_btq" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="password" className="block text-sm font-semibold text-emerald-800 mb-2">
                         Mot de passe <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                        type="password"
-                        id="password_btq"
-                        name="password_btq"
-                        value={formData.password_btq}
-                        onChange={handleChange}
-                        placeholder="••••••••"
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${
-                            error?.password_btq ? "border-red-500" : "border-gray-300"
-                        }`}
-                        required
-                    />
-                    {error?.password_btq && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center">
-                            <AlertCircle className="w-4 h-4 mr-1" />
-                            {error.password_btq}
-                        </p>
-                    )}
+                    <motion.div whileFocus="focus" variants={inputVariants}>
+                        <Input
+                            type="password"
+                            id="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            placeholder="••••••••"
+                            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-3 transition-all duration-300 ${
+                                error 
+                                    ? "border-red-300 bg-red-50 focus:ring-red-200" 
+                                    : "border-emerald-200 focus:ring-emerald-200 focus:border-emerald-400"
+                            }`}
+                            required
+                        />
+                    </motion.div>
                 </div>
 
-                {/* Lien mot de passe oublié */}
-                <div className="text-right">
-                    <Link
-                        to="/mot-de-passe-oublie"
-                        className="text-sm text-pink-500 hover:text-pink-800"
+                {/* Affichage des erreurs générales */}
+                {error && (
+                    <motion.div 
+                        className="p-4 bg-red-50 border border-red-200 rounded-xl"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4 }}
                     >
-                        Mot de passe oublié ?
-                    </Link>
-                </div>
+                        <p className="text-sm text-red-600 flex items-center">
+                            <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                            {error}
+                        </p>
+                    </motion.div>
+                )}
 
                 {/* Bouton de soumission */}
-                <button
+                <motion.button
                     type="submit"
                     disabled={loading}
-                    className={`w-full bg-pink-500 text-white py-2 px-4 rounded-lg hover:bg-pink-600 transition-all ${
-                        loading ? "opacity-50 cursor-not-allowed" : ""
+                    className={`w-full bg-gradient-to-r from-emerald-500 to-green-500 text-white py-3 px-4 rounded-xl font-semibold shadow-lg transition-all duration-300 ${
+                        loading 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:from-emerald-600 hover:to-green-600 hover:shadow-emerald-200/50"
                     }`}
+                    variants={buttonVariants}
+                    whileHover={!loading ? "hover" : {}}
+                    whileTap={!loading ? "tap" : {}}
                 >
-                    {loading ? "Connexion en cours..." : "Se connecter"}
-                </button>
-            </form>
+                    {loading ? (
+                        <div className="flex items-center justify-center">
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Authentification en cours...
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center">
+                            <Lock className="w-5 h-5 mr-2" />
+                            Accéder à l'espace admin
+                        </div>
+                    )}
+                </motion.button>
+            </motion.form>
 
-            {/* LIEN VERS INSCRIPTION */}
-            <p className="mt-6 text-center text-sm text-gray-600 px-4">
-                Vous n'avez pas encore de boutique ?{" "}
-                <Link
-                    to="/inscriptionBoutique"
-                    className="text-pink-500 hover:text-pink-700 font-medium"
-                >
-                    Inscrivez-vous
-                </Link>
-            </p>
+            {/* LIEN SUPPORT */}
+            <motion.div 
+                className="mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+            >
+                <p className="text-center text-sm text-emerald-700">
+                    Problème de connexion ?{" "}
+                    <Link
+                        to="/contact"
+                        className="font-semibold text-emerald-600 hover:text-emerald-800 underline transition-colors duration-300"
+                    >
+                        Contacter le support technique
+                    </Link>
+                </p>
+            </motion.div>
+
+            {/* INDICATEUR DE SÉCURITÉ */}
+            <motion.div 
+                className="mt-4 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+            >
+                <div className="flex items-center justify-center gap-2 text-xs text-emerald-500/60">
+                    <Shield className="h-3 w-3" />
+                    <span>Accès sécurisé • Administration Ebamage</span>
+                </div>
+            </motion.div>
         </ContainerForms>
     );
 };
 
-export default LoginBoutique;
+export default Login;

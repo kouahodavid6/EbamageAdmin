@@ -1,7 +1,9 @@
 import { Toaster } from 'react-hot-toast';
 import { CheckCircle, XCircle } from "lucide-react";
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
+import Login from './pages/Auth/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Categories from './pages/Catégoties/categories';
 import Variations from './pages/Variations/Variations';
@@ -9,8 +11,29 @@ import Boutiques from './pages/Boutiques/Boutiques';
 import Clients from './pages/Clients/Clients';
 import Commandes from './pages/Commandes/Commandes';
 import Localisations from './pages/Localisations/Localisations';
+import useAuthStore from './stores/auth.store';
+
+// Composant pour protéger les routes
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+// Composant pour les routes publiques (comme login)
+const PublicRoute = ({ children }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  
+  return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
+};
 
 function App() {
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+
+  useEffect(() => {
+    initializeAuth;
+  }, [initializeAuth]);
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
@@ -48,14 +71,76 @@ function App() {
 
         <main>
           <Routes>
-            {/* Accès direct sans authentification */}
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/variations" element={<Variations />} />
-            <Route path="/boutiques" element={<Boutiques />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/commandes" element={<Commandes />} />
-            <Route path="/localisations" element={<Localisations />} />
+            {/* Route publique - Login */}
+            <Route 
+              path="/login" 
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              } 
+            />
+
+            {/* Redirection par défaut vers login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+
+            {/* Routes protégées */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/categories" 
+              element={
+                <ProtectedRoute>
+                  <Categories />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/variations" 
+              element={
+                <ProtectedRoute>
+                  <Variations />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/boutiques" 
+              element={
+                <ProtectedRoute>
+                  <Boutiques />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/clients" 
+              element={
+                <ProtectedRoute>
+                  <Clients />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/commandes" 
+              element={
+                <ProtectedRoute>
+                  <Commandes />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/localisations" 
+              element={
+                <ProtectedRoute>
+                  <Localisations />
+                </ProtectedRoute>
+              } 
+            />
           </Routes>
         </main>
       </div>
