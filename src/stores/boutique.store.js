@@ -15,6 +15,20 @@ const useBoutiqueStore = create((set) => ({
             set({ error: error.message, loading: false });
         }
     },
+
+    deleteBoutique: async (hashid) => {
+        set({ loading: true, error: null });
+        try{
+            await boutiqueService.deleteBoutiques(hashid);
+
+            set((state) => ({
+                boutiques: state.boutiques.filter((boutique) => boutique.hashid !== hashid),
+                loading: false,
+            }));
+        }catch(error) {
+            set({ error: error.message, loading: false });
+        }
+    }
 }));
 
 export default useBoutiqueStore;

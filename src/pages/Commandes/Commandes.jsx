@@ -104,7 +104,7 @@ const Commandes = () => {
                 <div className="md:hidden flex justify-end p-4 absolute top-0 right-0 z-50">
                     <button
                         onClick={() => setSidebarOpen(false)}
-                        className="text-teal-600 hover:text-teal-800 transition-all duration-300 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-lg"
+                        className="text-emerald-600 hover:text-emerald-800 transition-all duration-300 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-lg"
                         aria-label="Fermer la sidebar"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -132,12 +132,12 @@ const Commandes = () => {
                         transition={{ duration: 0.6 }}
                     >
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-teal-900 mb-2">Gestion des commandes</h1>
-                            <p className="text-teal-600/80">Voir toutes les commandes passées dans la plateforme</p>
+                            <h1 className="text-2xl md:text-3xl font-bold text-emerald-900 mb-2">Gestion des commandes</h1>
+                            <p className="text-emerald-600/80">Voir toutes les commandes passées dans la plateforme</p>
                         </div>
                         {!loading && (
                             <motion.div 
-                                className="flex items-center gap-2 text-teal-600/80 bg-white/60 backdrop-blur-sm rounded-2xl px-4 py-2 border border-teal-100/60"
+                                className="flex items-center gap-2 text-emerald-600/80 bg-white/60 backdrop-blur-sm rounded-2xl px-4 py-2 border border-emerald-100/60"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -150,7 +150,7 @@ const Commandes = () => {
 
                     {/* Barre de recherche */}
                     <motion.div 
-                        className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-teal-100/60 p-6"
+                        className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.6, delay: 0.3 }}
@@ -158,19 +158,19 @@ const Commandes = () => {
                         <div className="flex flex-col sm:flex-row gap-4 items-stretch">
                             <div className="relative flex-1 min-w-0">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search className="text-teal-400 w-5 h-5" />
+                                    <Search className="text-emerald-400 w-5 h-5" />
                                 </div>
                                 <motion.input
                                     type="text"
                                     placeholder="Rechercher une commande par client, article ou boutique..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="block w-full pl-10 pr-4 py-3 border border-teal-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 transition-all duration-300 bg-white/50"
+                                    className="block w-full pl-10 pr-4 py-3 border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 transition-all duration-300 bg-white/50"
                                     whileFocus={{ scale: 1.01 }}
                                 />
                             </div>
                             <motion.button 
-                                className="flex-shrink-0 flex items-center justify-center gap-2 px-6 py-3 border border-teal-300 rounded-xl hover:bg-teal-50 transition-all duration-300 whitespace-nowrap font-medium text-teal-700"
+                                className="flex-shrink-0 flex items-center justify-center gap-2 px-6 py-3 border border-emerald-300 rounded-xl hover:bg-emerald-50 transition-all duration-300 whitespace-nowrap font-medium text-emerald-700"
                                 style={{ height: '48px' }}
                                 variants={buttonVariants}
                                 whileHover="hover"
@@ -189,40 +189,40 @@ const Commandes = () => {
                         Array(skeletonCount).fill(0).map((_, index) => (
                             <motion.div
                                 key={index}
-                                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-teal-100/60 p-6 animate-pulse"
+                                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 animate-pulse"
                                 variants={itemVariants}
                             >
                                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                                     <div className="flex items-center space-x-4">
-                                        <div className="w-12 h-12 bg-teal-200 rounded-xl" />
+                                        <div className="w-12 h-12 bg-emerald-200 rounded-xl" />
                                         <div className="space-y-2">
-                                            <div className="h-4 bg-teal-200 rounded w-40" />
-                                            <div className="h-3 bg-teal-100 rounded w-28" />
+                                            <div className="h-4 bg-emerald-200 rounded w-40" />
+                                            <div className="h-3 bg-emerald-100 rounded w-28" />
                                         </div>
                                     </div>
                                     <div className="space-y-2 w-32">
-                                        <div className="h-5 bg-teal-200 rounded" />
-                                        <div className="h-4 bg-teal-100 rounded" />
+                                        <div className="h-5 bg-emerald-200 rounded" />
+                                        <div className="h-4 bg-emerald-100 rounded" />
                                     </div>
                                 </div>
-                                <div className="mt-4 pt-4 border-t border-teal-100 flex gap-4">
-                                    <div className="h-4 bg-teal-100 rounded w-24" />
-                                    <div className="h-4 bg-teal-100 rounded w-24" />
-                                    <div className="h-4 bg-teal-100 rounded w-24" />
+                                <div className="mt-4 pt-4 border-t border-emerald-100 flex gap-4">
+                                    <div className="h-4 bg-emerald-100 rounded w-24" />
+                                    <div className="h-4 bg-emerald-100 rounded w-24" />
+                                    <div className="h-4 bg-emerald-100 rounded w-24" />
                                 </div>
                             </motion.div>
                         ))
                         ) : filteredCommandes.length === 0 ? (
                         <motion.div 
-                            className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-teal-100/60"
+                            className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60"
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                         >
-                            <Package className="w-16 h-16 text-teal-300 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-teal-900 mb-2">
+                            <Package className="w-16 h-16 text-emerald-300 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-emerald-900 mb-2">
                                 {searchTerm ? "Aucune commande trouvée" : "Aucune commande disponible"}
                             </h3>
-                            <p className="text-teal-600/70">
+                            <p className="text-emerald-600/70">
                                 {searchTerm 
                                     ? "Essayez de modifier vos critères de recherche" 
                                     : "Les commandes apparaîtront ici une fois passées"
@@ -233,7 +233,7 @@ const Commandes = () => {
                             filteredCommandes.map((commande) => (
                                 <motion.div 
                                     key={commande.hashid} 
-                                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-teal-100/60 overflow-hidden cursor-pointer group"
+                                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 overflow-hidden cursor-pointer group"
                                     variants={itemVariants}
                                     whileHover="hover"
                                     onClick={() => setSelectedCommande(commande)}
@@ -242,46 +242,46 @@ const Commandes = () => {
                                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                                             <div className="flex items-center space-x-4">
                                                 <motion.div 
-                                                    className="bg-gradient-to-br from-teal-500 to-cyan-500 p-3 rounded-xl shadow-lg"
+                                                    className="bg-gradient-to-br from-emerald-500 to-cyan-500 p-3 rounded-xl shadow-lg"
                                                     whileHover={{ scale: 1.1, rotate: 5 }}
                                                     transition={{ duration: 0.2 }}
                                                 >
                                                     <Package className="w-6 h-6 text-white" />
                                                 </motion.div>
                                                 <div>
-                                                    <h3 className="font-semibold text-teal-900 text-lg">
+                                                    <h3 className="font-semibold text-emerald-900 text-lg">
                                                         Commande #{commande.hashid.substring(0, 8)}
                                                     </h3>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <User className="w-4 h-4 text-teal-500" />
-                                                        <span className="text-sm text-teal-600/80">{commande.client.nom_clt}</span>
+                                                        <User className="w-4 h-4 text-emerald-500" />
+                                                        <span className="text-sm text-emerald-600/80">{commande.client.nom_clt}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col lg:items-end gap-3">
-                                                <div className="text-xl font-bold text-teal-900">
+                                                <div className="text-xl font-bold text-emerald-900">
                                                     {commande.prix_total_commande.toLocaleString('fr-FR')} FCFA
                                                 </div>
                                                 {getStatusBadge(commande.statut)}
                                             </div>
                                         </div>
 
-                                        <div className="mt-4 pt-4 border-t border-teal-100">
-                                            <div className="flex flex-wrap items-center gap-4 text-sm text-teal-600/80">
+                                        <div className="mt-4 pt-4 border-t border-emerald-100">
+                                            <div className="flex flex-wrap items-center gap-4 text-sm text-emerald-600/80">
                                                 <div className="flex items-center gap-2">
-                                                    <Store className="w-4 h-4 text-teal-500" />
+                                                    <Store className="w-4 h-4 text-emerald-500" />
                                                     <span>{commande.articles[0]?.boutique.nom_btq || 'Boutique inconnue'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <CreditCard className="w-4 h-4 text-teal-500" />
+                                                    <CreditCard className="w-4 h-4 text-emerald-500" />
                                                     <span>{commande.moyen_de_paiement}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <MapPin className="w-4 h-4 text-teal-500" />
+                                                    <MapPin className="w-4 h-4 text-emerald-500" />
                                                     <span>{commande.localisation.commune}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <Clock className="w-4 h-4 text-teal-500" />
+                                                    <Clock className="w-4 h-4 text-emerald-500" />
                                                     <span>{formatDate(commande.created_at)}</span>
                                                 </div>
                                             </div>

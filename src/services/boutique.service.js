@@ -10,6 +10,17 @@ const getBoutiques = async () => {
     }
 }
 
+const deleteBoutiques = async (hashid) => {
+    try{
+        const response = await axiosInstance.post(`/api/boutique/delete/${hashid}`);
+        return response.data;
+    }catch(error) {
+        console.error("Erreur lors de la suppresion de la boutique: ", error);
+        throw error.response?.data || error;
+    }
+}
+
 export const boutiqueService = {
-    getBoutiques
+    getBoutiques,
+    deleteBoutiques
 };

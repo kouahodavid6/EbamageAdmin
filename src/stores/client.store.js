@@ -15,6 +15,20 @@ const useClientStore = create((set) => ({
             set({ error: error.message, loading: false });
         }
     },
+
+    deleteClient: async (hashid) => {
+        set({ loading: true, error: null });
+        try{
+            await clientService.deleteClients(hashid);
+
+            set((state) => ({
+                clients: state.clients.filter((client) => client.hashid !== hashid),
+                loading: false,
+            }));
+        }catch(error){
+            set({ error: error.message, loading: false });
+        }
+    }
 }));
 
 export default useClientStore;

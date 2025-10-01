@@ -1,20 +1,44 @@
 import { useState, useEffect } from "react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
-import { Search, Filter, User, Mail, Calendar, Phone, MapPin, CreditCard, Star } from "lucide-react";
+import { Search, Filter, User, Mail, Calendar, Phone } from "lucide-react";
 import useClientStore from "../../stores/client.store";
 import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { motion } from "framer-motion";
 
 const Clients = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const { clients, loading, error, fetchClients } = useClientStore();
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { clients, loading, error, fetchClients, deleteClient } = useClientStore();
 
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
+
+  const handleDeleteClick = (client) => {
+    setSelectedClient(client);
+  };
+
+    const handleConfirmDelete = async () => {
+    if (!selectedClient) return;
+    setIsDeleting(true);
+    try {
+      await deleteClient(selectedClient.hashid);
+      setSelectedClient(null); // fermer modal
+    } catch (err) {
+      console.error("Erreur suppression client:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setSelectedClient(null);
+  };
 
   const filteredClients = clients.filter(
     (client) =>
@@ -370,11 +394,12 @@ const Clients = () => {
                       transition={{ delay: 0.3 + (index * 0.1) }}
                     >
                       <motion.button
-                        className="flex-1 py-2 text-emerald-600 hover:text-emerald-700 font-medium text-sm transition-colors duration-300 hover:bg-emerald-50 rounded-lg"
+                        onClick={() => handleDeleteClick(client)}
+                        className="flex-1 py-2 text-red-600 hover:text-red-700 font-medium text-sm transition-colors duration-300 hover:bg-red-50 rounded-lg"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        Profil
+                        Supprimer
                       </motion.button>
                       <motion.button
                         className="flex-1 py-2 bg-gradient-to-r from-emerald-500 to-emerald-500 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-600 font-medium text-sm transition-all duration-300 shadow-lg shadow-blue-500/25"
@@ -382,7 +407,7 @@ const Clients = () => {
                         whileHover="hover"
                         whileTap="tap"
                       >
-                        Historique
+                        Contacter
                       </motion.button>
                     </motion.div>
                   </div>
@@ -392,6 +417,15 @@ const Clients = () => {
           )}
         </main>
       </div>
+
+      {/* Modal confirmation */}
+      <DeleteConfirmModal
+        isOpen={!!selectedClient}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        entityName={selectedClient?.nom_clt}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };

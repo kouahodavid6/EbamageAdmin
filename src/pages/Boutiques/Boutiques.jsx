@@ -5,16 +5,40 @@ import { Search, Filter, Store, Mail, Calendar, CreditCard, Phone } from "lucide
 import useBoutiqueStore from "../../stores/boutique.store";
 import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { motion } from "framer-motion";
 
 const Boutiques = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const { boutiques, loading, error, fetchBoutiques } = useBoutiqueStore();
+  const [selectedBoutique, setSelectedBoutique] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { boutiques, loading, error, fetchBoutiques, deleteBoutique } = useBoutiqueStore();
 
   useEffect(() => {
     fetchBoutiques();
   }, [fetchBoutiques]);
+
+    const handleDeleteClick = (boutique) => {
+    setSelectedBoutique(boutique);
+  };
+
+    const handleConfirmDelete = async () => {
+    if (!selectedBoutique) return;
+    setIsDeleting(true);
+    try {
+      await deleteBoutique(selectedBoutique.hashid);
+      setSelectedBoutique(null);
+    } catch (err) {
+      console.error("Erreur suppression client:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setSelectedBoutique(null);
+  };
 
   const filteredBoutiques = boutiques.filter(
     (boutique) =>
@@ -374,11 +398,12 @@ const Boutiques = () => {
                       transition={{ delay: 0.3 + (index * 0.1) }}
                     >
                       <motion.button
-                        className="flex-1 py-2 text-emerald-600 hover:text-emerald-700 font-medium text-sm transition-colors duration-300"
+                        onClick={() => handleDeleteClick(boutique)}
+                        className="flex-1 py-2 text-red-600 hover:text-red-700 font-medium text-sm transition-colors duration-300 hover:bg-red-50 rounded-lg"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        Voir détails
+                        Supprimer
                       </motion.button>
                       <motion.button
                         className="flex-1 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-medium text-sm transition-all duration-300"
@@ -397,6 +422,15 @@ const Boutiques = () => {
           )}
         </main>
       </div>
+
+      {/* Modal confirmation */}
+      <DeleteConfirmModal
+        isOpen={!!selectedBoutique}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        entityName={selectedBoutique?.nom_btq}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };
