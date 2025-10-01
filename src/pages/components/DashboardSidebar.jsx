@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useState } from 'react';
-import { Store, FolderOpen, Settings, Users, ShoppingCart, MapPin, LogOut, BarChart3 } from 'lucide-react';
+import { Store, FolderOpen, Settings, Users, User, ShoppingCart, MapPin, LogOut, BarChart3 } from 'lucide-react';
 import useAuthStore from '../../stores/auth.store';
 import { useNavigate } from 'react-router-dom';
 import ConfirmLogoutModal from '../../components/ConfirmLogoutModal';

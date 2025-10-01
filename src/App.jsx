@@ -11,6 +11,7 @@ import Boutiques from './pages/Boutiques/Boutiques';
 import Clients from './pages/Clients/Clients';
 import Commandes from './pages/Commandes/Commandes';
 import Localisations from './pages/Localisations/Localisations';
+import Profil from './pages/Profil/Profil';
 import useAuthStore from './stores/auth.store';
 
 // Composant pour protéger les routes
@@ -138,6 +139,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Localisations />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profil" 
+              element={
+                <ProtectedRoute>
+                  <Profil />
                 </ProtectedRoute>
               } 
             />

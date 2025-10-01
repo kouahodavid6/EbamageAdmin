@@ -274,8 +274,8 @@ const Localisations = () => {
                       <motion.div
                         key={`ville-${city.hashid}`}
                         className="bg-white rounded-2xl shadow-lg border border-emerald-100/60 overflow-hidden hover:shadow-xl transition-all duration-300"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         transition={{ duration: 0.5 }}
                       >
                         {/* En-tête de la ville */}
