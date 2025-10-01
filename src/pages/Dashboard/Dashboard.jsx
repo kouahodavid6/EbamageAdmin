@@ -3,6 +3,7 @@ import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
 import {
   Users,
+  User,
   ShoppingBag,
   Package,
   TrendingUp,
@@ -642,7 +643,7 @@ const recentClients = getRecent(clients || []);
                                     {initiale}
                                 </div>
                                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white">
-                                    <Store className="w-2 h-2 text-white" />
+                                    <User className="w-2 h-2 text-white" />
                                 </div>
                             </div>
 
