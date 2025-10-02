@@ -14,6 +14,8 @@ import Localisations from './pages/Localisations/Localisations';
 import Profil from './pages/Profil/Profil';
 import useAuthStore from './stores/auth.store';
 
+import NotFound from './components/NotFound';
+
 // Composant pour protéger les routes
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
@@ -151,6 +153,8 @@ function App() {
               } 
             />
           </Routes>
+
+          <Route path="*" element={<NotFound />} />
         </main>
       </div>
     </Router>
