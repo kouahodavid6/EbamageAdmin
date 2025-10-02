@@ -169,21 +169,12 @@ const CommandeDetailModal = ({ commande, onClose }) => {
                         </div>
                         <div>
                           <p className="text-emerald-600/70 text-xs font-medium mb-1">Email</p>
-                          <p className="text-emerald-900">{commande.client.email_clt}</p>
+                          <p className="text-emerald-900 font-medium">{commande.client.email_clt}</p>
                         </div>
                       </div>
                       <div className="space-y-3">
-                        {/* <div>
-                          <p className="text-emerald-600/70 text-xs font-medium mb-1">ID Client</p>
-                          <p className="text-emerald-900 font-mono text-sm">{commande.client.hashid_clt}</p>
-                        </div> */}
-                        <div>
-                          <p className="text-emerald-600/70 text-xs font-medium mb-1">Téléphone</p>
-                          <p className="text-emerald-900 flex items-center gap-2">
-                            <Phone className="w-4 h-4" />
-                            {commande.client.tel_clt}
-                          </p>
-                        </div>
+                        <p className="text-emerald-600/70 text-xs font-medium mb-1">Téléphone</p>
+                        <p className="text-emerald-900 font-medium">{commande.client.tel_clt}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -268,24 +259,20 @@ const CommandeDetailModal = ({ commande, onClose }) => {
                                 <Store className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
                                 <span className="text-emerald-700 font-medium text-sm sm:text-base">Boutique</span>
                               </div>
-                              <div className="grid grid-cols-1 xs:grid-cols-2 gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                                <div className="text-center xs:text-left">
-                                  <p className="text-emerald-600/70 text-xs">Nom</p>
-                                  <p className="text-emerald-900 font-medium truncate">{article.boutique.nom_btq}</p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div className="space-y-3">
+                                  <div>
+                                    <p className="text-emerald-600/70 text-xs font-medium mb-1">Nom complet</p>
+                                    <p className="text-emerald-900 font-medium">{commande.boutique.nom_btq}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-emerald-600/70 text-xs font-medium mb-1">Email</p>
+                                    <p className="text-emerald-900 font-medium">{commande.boutique.email_btq}</p>
+                                  </div>
                                 </div>
-                                <div className="text-center xs:text-left">
-                                  <p className="text-emerald-600/70 text-xs">Contact</p>
-                                  <p className="text-emerald-900 flex items-center gap-1 justify-center xs:justify-start">
-                                    <Phone className="w-3 h-3" />
-                                    {article.boutique.tel_btq}
-                                  </p>
-                                </div>
-                                <div className="xs:col-span-2 text-center xs:text-left">
-                                  <p className="text-emerald-600/70 text-xs">Email</p>
-                                  <p className="text-emerald-900 flex items-center gap-1 justify-center xs:justify-start truncate">
-                                    <Mail className="w-3 h-3" />
-                                    {article.boutique.email_btq}
-                                  </p>
+                                <div className="space-y-3">
+                                  <p className="text-emerald-600/70 text-xs font-medium mb-1">Téléphone</p>
+                                  <p className="text-emerald-900 font-medium">{commande.boutique.tel_btq}</p>
                                 </div>
                               </div>
                             </div>
