@@ -70,7 +70,7 @@ const NotFound = () => {
                         className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-emerald-200/50 transform hover:-translate-y-1"
                     >
                         <Home className="h-5 w-5" />
-                        Retour à l'accueil
+                        Retour à la page page admin
                     </Link>
                 </motion.div>
 
