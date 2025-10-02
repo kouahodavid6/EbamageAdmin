@@ -109,41 +109,51 @@ const CommandeDetailModal = ({ commande, onClose }) => {
             className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-emerald-100/20"
             variants={modalVariants}
           >
-            <div className="p-8">
+            <div className="p-4 sm:p-6 lg:p-8">
               {/* En-tête */}
-              <div className="flex justify-between items-start sm:items-start gap-4 mb-6 sm:mb-8 border-b border-emerald-100 pb-4 sm:pb-6">
-                <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                  <motion.div 
-                    className="bg-gradient-to-br from-emerald-500 to-cyan-500 p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ShoppingBag className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-                  </motion.div>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="text-xl sm:text-2xl font-bold text-emerald-900 mb-1 sm:mb-2 truncate">
+              <div className="flex flex-col gap-4 mb-6 sm:mb-8 border-b border-emerald-100 pb-4 sm:pb-6">
+                {/* En-tête avec titre et bouton fermeture */}
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    {/* Icône */}
+                    <motion.div 
+                      className="bg-gradient-to-br from-emerald-500 to-cyan-500 p-2 sm:p-3 rounded-lg shadow-lg flex-shrink-0 mt-1"
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </motion.div>
+                    {/* Titre principal */}
+                    <h2 className="text-sm sm:text-2xl font-bold text-emerald-900 flex-1 min-w-0">
                       Détails de la commande
                     </h2>
-                    <div className="flex flex-wrap gap-2 sm:gap-3">
-                      <span className="bg-emerald-50 text-emerald-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium border border-emerald-200 truncate">
-                        #{commande.hashid.substring(0, 8).toUpperCase()}
-                      </span>
-                      <span className="text-emerald-600 text-xs sm:text-sm flex items-center gap-1 sm:gap-2 bg-emerald-50/50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-emerald-100 truncate">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                        {formatDate(commande.created_at)}
-                      </span>
-                    </div>
                   </div>
+                  
+                  {/* Bouton fermeture */}
+                  <motion.button
+                    onClick={onClose}
+                    className="bg-emerald-50 hover:bg-emerald-100 p-2 rounded-lg text-emerald-500 hover:text-emerald-700 transition-all duration-200 border border-emerald-200 flex-shrink-0"
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </motion.button>
                 </div>
 
-                <motion.button
-                  onClick={onClose}
-                  className="bg-emerald-50 hover:bg-emerald-100 p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-emerald-500 hover:text-emerald-700 transition-all duration-200 border border-emerald-200 self-auto flex-shrink-0"
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                </motion.button>
+                {/* Informations commande */}
+                <div className="flex-1 min-w-0">
+                  {/* Identifiants - disposition horizontale responsive */}
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
+                    <span className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-sm font-medium border border-emerald-200 inline-flex items-center gap-2 max-w-full">
+                      <span className="truncate">#{commande.hashid.substring(0, 8).toUpperCase()}</span>
+                    </span>
+                    
+                    <span className="bg-emerald-50/50 text-emerald-600 px-3 py-1.5 rounded-full text-sm inline-flex items-center gap-2 border border-emerald-100 max-w-full">
+                      <Calendar className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{formatDate(commande.created_at)}</span>
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
