@@ -255,10 +255,12 @@ const CommandeDetailModal = ({ commande, onClose }) => {
 
                             {/* Boutique */}
                             <div className="bg-white rounded-lg p-2 sm:p-3 border border-emerald-200">
-                              <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2 justify-center sm:justify-start">
-                                <Store className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
-                                <span className="text-emerald-700 font-medium text-sm sm:text-base">Boutique</span>
-                              </div>
+                              <h3 className="font-semibold text-emerald-900 mb-4 flex items-center gap-3 text-md">
+                                <div className="p-2 bg-emerald-100 rounded-lg">
+                                  <Store className="w-5 h-5 text-emerald-600" />
+                                </div>
+                                Informations boutique
+                              </h3>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                 <div className="space-y-3">
                                   <div>
