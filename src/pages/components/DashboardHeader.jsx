@@ -41,28 +41,24 @@ const DashboardHeader = ({ title, toggleSidebar }) => {
                 <motion.div 
                     whileHover={{ x: 2 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    className="flex items-center space-x-3 border-l pl-4 border-emerald-100"
                 >
-                    <Link
-                        to="/profil"
-                        className="flex items-center space-x-3 border-l pl-4 border-emerald-100"
-                    >
-                        <div className="relative">
-                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center text-white font-semibold shadow-lg">
-                                E
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white">
-                                <User className="w-2 h-2 text-white" />
-                            </div>
+                    <div className="relative">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center text-white font-semibold shadow-lg">
+                            E
                         </div>
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white">
+                            <User className="w-2 h-2 text-white" />
+                        </div>
+                    </div>
 
-                        <div className="hidden md:block">
-                            <p className="text-sm font-bold text-emerald-800">Ebamage</p>
-                            <div className="flex items-center space-x-1">
-                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
-                                <p className="text-xs text-emerald-600 font-medium">Admin</p>
-                            </div>
+                    <div className="hidden md:block">
+                        <p className="text-sm font-bold text-emerald-800">Ebamage</p>
+                        <div className="flex items-center space-x-1">
+                            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
+                            <p className="text-xs text-emerald-600 font-medium">Admin</p>
                         </div>
-                    </Link>
+                    </div>
                 </motion.div>
             </div>
 
