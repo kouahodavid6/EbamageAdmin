@@ -1,29 +1,28 @@
-import { useEffect, useState } from "react";
-import { Plus, Edit, X } from "lucide-react";
+import { useState } from "react";
+import { Plus, X } from "lucide-react";
 import useVariationStore from "../../../stores/variation.store";
 
-const VariationModal = ({ isOpen, onClose, variationToEdit }) => {
-    const { addVariation, editVariation } = useVariationStore();
+const VariationModal = ({ isOpen, onClose }) => {
+    const { addVariation } = useVariationStore();
     const [nom_variation, setNomVariation] = useState("");
-
-    useEffect(() => {
-        if (variationToEdit) {
-            setNomVariation(variationToEdit.nom_variation);
-        } else {
-            setNomVariation("");
-        }
-    }, [variationToEdit]);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const payload = { nom_variation };
+        if (!nom_variation.trim()) return;
 
-        if (variationToEdit) {
-            await editVariation(variationToEdit.hashid, payload);
-        } else {
+        setIsLoading(true);
+        const payload = { nom_variation: nom_variation.trim() };
+
+        try {
             await addVariation(payload);
+            setNomVariation("");
+            onClose();
+        } catch (error) {
+            console.error("Erreur:", error);
+        } finally {
+            setIsLoading(false);
         }
-        onClose();
     };
 
     if (!isOpen) return null;
@@ -34,57 +33,73 @@ const VariationModal = ({ isOpen, onClose, variationToEdit }) => {
             onClick={onClose}
         >
             <div
-                className="bg-white p-6 rounded-xl w-full max-w-md shadow-lg relative"
+                className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl relative mx-4"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Bouton croix */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-600 hover:text-red-600"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-green-600 transition-colors p-1 rounded-lg hover:bg-green-50"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-full bg-red-100">
-                        {variationToEdit ? (
-                            <Edit className="text-pink-600" />
-                        ) : (
-                            <Plus className="text-pink-600" />
-                        )}
+                {/* Header avec style vert */}
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 rounded-full bg-green-100">
+                        <Plus className="w-5 h-5 text-green-600" />
                     </div>
-                    <h2 className="text-lg font-semibold">
-                        {variationToEdit ? "Modifier la" : "Ajouter une"} variation
-                    </h2>
+                    <div>
+                        <h2 className="text-xl font-semibold text-green-900">
+                            Nouvelle variation
+                        </h2>
+                        <p className="text-green-600 text-sm mt-1">
+                            Créez un nouveau type de variation
+                        </p>
+                    </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            Nom de la variation
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nom de la variation <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             value={nom_variation}
                             onChange={(e) => setNomVariation(e.target.value)}
                             required
-                            className="w-full border rounded-md p-2 mt-1 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            placeholder="Ex: Couleur, Taille, Matériau..."
+                            className="w-full border border-green-200 rounded-xl p-3 mt-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50/50 transition-colors placeholder-green-300 text-green-900"
+                            disabled={isLoading}
                         />
+                        <p className="text-green-600 text-xs mt-2">
+                            Ce nom identifiera le type de variation dans votre boutique
+                        </p>
                     </div>
 
-                    <div className="flex justify-end gap-3">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-green-100">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
+                            disabled={isLoading}
+                            className="px-6 py-3 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
                         >
                             Annuler
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700"
+                            disabled={isLoading || !nom_variation.trim()}
+                            className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                            {variationToEdit ? "Modifier" : "Ajouter"}
+                            {isLoading ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Création...
+                                </>
+                            ) : (
+                                "Créer"
+                            )}
                         </button>
                     </div>
                 </form>

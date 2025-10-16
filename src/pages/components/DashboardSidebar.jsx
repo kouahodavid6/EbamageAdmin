@@ -63,7 +63,7 @@ const DashboardSidebar = () => {
             path: '/localisations',
             name: 'Localisations',
             icon: <MapPin className="h-5 w-5" />,
-        },
+        }
     ];
 
     const itemVariants = {
