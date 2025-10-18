@@ -1,15 +1,29 @@
+import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
-import { Plus, Building2, MapPin, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Building2, MapPin, ChevronDown, X, Edit, Trash2 } from "lucide-react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
 import StatsCard from "./components/StatsCard";
 import statData from "../../data/statData";
 import useLocalisationStore from "../../stores/localisation.store";
 import { motion, AnimatePresence } from "framer-motion";
+import ModalVille from "./components/ModalVille";
+import ModalCommune from "./components/ModalCommune";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 
 const Localisations = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedCityId, setExpandedCityId] = useState(null);
+  
+  // États pour les modaux
+  const [villeModalOpen, setVilleModalOpen] = useState(false);
+  const [communeModalOpen, setCommuneModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  
+  // États pour les éléments sélectionnés
+  const [selectedVille, setSelectedVille] = useState(null);
+  const [selectedCommune, setSelectedCommune] = useState(null);
+  const [actionType, setActionType] = useState(""); // "delete_ville", "delete_commune"
 
   const {
     villes,
@@ -18,10 +32,16 @@ const Localisations = () => {
     fetchVilles,
     fetchCommunes,
     fetchCommunesParVille,
-    ajouterVilles,
-    ajouterCommunes,
+    ajouterVille,
+    modifierVille,
+    supprimerVille,
+    ajouterCommune,
+    modifierCommune,
+    supprimerCommune,
     loading,
     error,
+    clearError,
+    getCommunesByVilleId
   } = useLocalisationStore();
 
   // Chargement initial
@@ -40,7 +60,7 @@ const Localisations = () => {
 
   const stats = statData(villes?.length || 0, communes?.length || 0);
 
-  const toggleCityExpansion = async (cityId, cityName) => {
+  const toggleCityExpansion = async (cityId) => {
     if (expandedCityId === cityId) {
       setExpandedCityId(null);
       return;
@@ -48,20 +68,160 @@ const Localisations = () => {
 
     setExpandedCityId(cityId);
     
-    // Vérifie si nous avons déjà les communes pour cette ville
-    if (!communesParVille[cityId] || communesParVille[cityId].length === 0) {
-      await fetchCommunesParVille(cityName, cityId);
+    const existingCommunes = getCommunesByVilleId(cityId);
+    if (!existingCommunes || existingCommunes.length === 0) {
+      await fetchCommunesParVille(cityId);
     }
   };
 
-  const handleAddCommune = (cityId) => {
-    const city = villes.find(v => v.hashid === cityId);
-    if (city) {
-      alert(`Ajouter une commune pour la ville: ${city.lib_ville}`);
+  // Gestion des actions
+  const handleAjouterVille = async (lib_ville) => {
+    try {
+      const result = await ajouterVille(lib_ville);
+      if (result.success) {
+        toast.success(`Ville "${lib_ville}" ajoutée avec succès`);
+      }
+      setVilleModalOpen(false);
+    } catch (err) {
+      console.error("Erreur lors de l'ajout de la ville:", err);
     }
   };
 
-  // Squelette pour les statistiques
+  const handleModifierVille = async (hashid, lib_ville) => {
+    try {
+      const result = await modifierVille(hashid, lib_ville);
+      if (result.success) {
+        toast.success(`Ville "${lib_ville}" modifiée avec succès`);
+      }
+      setVilleModalOpen(false);
+      setSelectedVille(null);
+    } catch (err) {
+      console.error("Erreur lors de la modification de la ville:", err);
+    }
+  };
+
+  const handleSupprimerVille = async () => {
+    if (!selectedVille) return;
+    try {
+      const result = await supprimerVille(selectedVille.hashid);
+      if (result.success) {
+        toast.success(`Ville "${selectedVille.lib_ville}" supprimée avec succès`);
+      } else {
+        toast.warning(result.message || "Impossible de supprimer cette ville");
+      }
+      setDeleteModalOpen(false);
+      setSelectedVille(null);
+      setActionType("");
+    } catch (err) {
+      console.error("Erreur lors de la suppression de la ville:", err);
+    }
+  };
+
+  const handleAjouterCommune = async (lib_commune, id_ville_hash) => {
+    try {
+      const result = await ajouterCommune(lib_commune, id_ville_hash);
+      if (result.success) {
+        toast.success(`Commune "${lib_commune}" ajoutée avec succès`);
+      }
+      setCommuneModalOpen(false);
+      setSelectedVille(null);
+    } catch (err) {
+      console.error("Erreur lors de l'ajout de la commune:", err);
+    }
+  };
+
+  const handleModifierCommune = async (hashid, lib_commune, id_ville_hash) => {
+    try {
+      const result = await modifierCommune(hashid, lib_commune, id_ville_hash);
+      if (result.success) {
+        toast.success(`Commune "${lib_commune}" modifiée avec succès`);
+      }
+      setCommuneModalOpen(false);
+      setSelectedCommune(null);
+    } catch (err) {
+      console.error("Erreur lors de la modification de la commune:", err);
+    }
+  };
+
+  const handleSupprimerCommune = async () => {
+    if (!selectedCommune) return;
+    try {
+      const result = await supprimerCommune(selectedCommune.hashid);
+      if (result.success) {
+        toast.success(`Commune "${selectedCommune.lib_commune}" supprimée avec succès`);
+      }
+      setDeleteModalOpen(false);
+      setSelectedCommune(null);
+      setActionType("");
+    } catch (err) {
+      console.error("Erreur lors de la suppression de la commune:", err);
+    }
+  };
+
+  // Ouvrir modaux
+  const openAjouterVilleModal = () => {
+    setSelectedVille(null);
+    setVilleModalOpen(true);
+  };
+
+  const openModifierVilleModal = (ville) => {
+    setSelectedVille(ville);
+    setVilleModalOpen(true);
+  };
+
+  const openSupprimerVilleModal = (ville) => {
+    setSelectedVille(ville);
+    setActionType("delete_ville");
+    setDeleteModalOpen(true);
+  };
+
+  const openAjouterCommuneModal = (ville) => {
+    setSelectedVille(ville);
+    setSelectedCommune(null);
+    setCommuneModalOpen(true);
+  };
+
+  const openModifierCommuneModal = (commune) => {
+    setSelectedCommune(commune);
+    setSelectedVille(null);
+    setCommuneModalOpen(true);
+  };
+
+  const openSupprimerCommuneModal = (commune) => {
+    setSelectedCommune(commune);
+    setActionType("delete_commune");
+    setDeleteModalOpen(true);
+  };
+
+  // Fermer le modal de suppression
+  const handleCloseDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setSelectedVille(null);
+    setSelectedCommune(null);
+    setActionType("");
+  };
+
+  // Obtenir le nom de l'entité pour le modal de suppression
+  const getEntityName = () => {
+    if (actionType === "delete_ville" && selectedVille) {
+      return `la ville "${selectedVille.lib_ville}"`;
+    }
+    if (actionType === "delete_commune" && selectedCommune) {
+      return `la commune "${selectedCommune.lib_commune}"`;
+    }
+    return "cet élément";
+  };
+
+  // Fonction de confirmation de suppression
+  const handleConfirmDelete = () => {
+    if (actionType === "delete_ville") {
+      handleSupprimerVille();
+    } else if (actionType === "delete_commune") {
+      handleSupprimerCommune();
+    }
+  };
+
+  // Squelettes
   const StatsSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {[1, 2, 3].map((item) => (
@@ -78,7 +238,6 @@ const Localisations = () => {
     </div>
   );
 
-  // Squelette pour les villes
   const CitySkeleton = () => (
     <div className="space-y-4">
       {[1, 2, 3].map((item) => (
@@ -100,7 +259,6 @@ const Localisations = () => {
     </div>
   );
 
-  // Squelette pour les communes
   const CommuneSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
       {[1, 2, 3, 4, 5, 6].map((item) => (
@@ -136,16 +294,7 @@ const Localisations = () => {
             className="text-emerald-600 hover:text-emerald-800 transition-all duration-300 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-lg"
             aria-label="Fermer la sidebar"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-5 h-5" />
           </button>
         </div>
         <DashboardSidebar />
@@ -166,20 +315,18 @@ const Localisations = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            {/* Titre + Description */}
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-emerald-900 mb-2 text-left">
                 Gestion des localisations
               </h1>
-              <p className="text-emerald-600/80text-left">
+              <p className="text-emerald-600/80 text-left">
                 Gérez les villes et communes de votre plateforme
               </p>
             </div>
 
-            {/* Boutons */}
             <div className="flex w-full flex-col sm:flex-row gap-3 sm:gap-4 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto md:mx-0">
               <motion.button
-                onClick={ajouterVilles}
+                onClick={openAjouterVilleModal}
                 disabled={loading}
                 className="bg-gradient-to-r w-full from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-emerald-500/25 disabled:opacity-50"
                 whileHover={{ scale: 1.05 }}
@@ -188,28 +335,23 @@ const Localisations = () => {
                 <Plus className="w-5 h-5" />
                 <span className="font-medium">Ajouter Ville</span>
               </motion.button>
-
-              <motion.button
-                onClick={ajouterCommunes}
-                disabled={loading}
-                className="bg-gradient-to-r w-full from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-emerald-500/25 disabled:opacity-50"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Plus className="w-5 h-5" />
-                <span className="font-medium">Ajouter Commune</span>
-              </motion.button>
             </div>
           </motion.div>
 
-          {/* Affichage des erreurs */}
+          {/* Affichage des erreurs globales */}
           {error && (
             <motion.div 
-              className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl"
+              className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl flex justify-between items-center"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
             >
               <p className="font-medium">{error}</p>
+              <button 
+                onClick={clearError}
+                className="text-red-700 hover:text-red-900 ml-4"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </motion.div>
           )}
 
@@ -283,9 +425,8 @@ const Localisations = () => {
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             {/* Partie gauche : icône + infos */}
                             <div className="flex items-center space-x-4">
-                              {/* Bouton flèche */}
                               <motion.button
-                                onClick={() => toggleCityExpansion(city.hashid, city.lib_ville)}
+                                onClick={() => toggleCityExpansion(city.hashid)}
                                 disabled={loading}
                                 className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all duration-300 disabled:opacity-50"
                                 whileHover={{ scale: 1.1 }}
@@ -299,12 +440,10 @@ const Localisations = () => {
                                 </motion.div>
                               </motion.button>
 
-                              {/* Icône ville */}
                               <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg">
                                 <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                               </div>
 
-                              {/* Infos */}
                               <div>
                                 <h4 className="font-semibold text-emerald-900 text-base sm:text-lg">
                                   {city.lib_ville}
@@ -315,15 +454,37 @@ const Localisations = () => {
                               </div>
                             </div>
 
-                            {/* Bouton ajouter commune */}
-                            <motion.button
-                              onClick={() => handleAddCommune(city.hashid)}
-                              className="w-full md:w-auto px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-lg text-sm sm:text-base font-medium transition-all duration-300 shadow-lg shadow-teal-500/25 text-center"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              + Commune
-                            </motion.button>
+                            {/* Actions ville */}
+                            <div className="flex items-center gap-2">
+                              <motion.button
+                                onClick={() => openModifierVilleModal(city)}
+                                className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-200"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                title="Modifier la ville"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </motion.button>
+                              
+                              <motion.button
+                                onClick={() => openSupprimerVilleModal(city)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                title="Supprimer la ville"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </motion.button>
+
+                              <motion.button
+                                onClick={() => openAjouterCommuneModal(city)}
+                                className="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-lg text-sm font-medium transition-all duration-300 shadow-lg shadow-teal-500/25"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                + Commune
+                              </motion.button>
+                            </div>
                           </div>
                         </div>
 
@@ -350,7 +511,7 @@ const Localisations = () => {
                                     Aucune commune dans cette ville
                                   </p>
                                   <motion.button
-                                    onClick={() => handleAddCommune(city.hashid)}
+                                    onClick={() => openAjouterCommuneModal(city)}
                                     className="text-emerald-600 hover:text-emerald-700 text-sm font-medium underline"
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
@@ -368,7 +529,7 @@ const Localisations = () => {
                                   {cityCommunes.map((commune) => (
                                     <motion.div
                                       key={`commune-${commune.hashid}`}
-                                      className="flex items-center justify-between p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 hover:bg-emerald-50 hover:shadow-md transition-all duration-300"
+                                      className="flex items-center justify-between p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 hover:bg-emerald-50 hover:shadow-md transition-all duration-300 group"
                                       whileHover={{ scale: 1.02 }}
                                     >
                                       <div className="flex items-center space-x-3">
@@ -378,6 +539,28 @@ const Localisations = () => {
                                         <span className="font-medium text-emerald-900">
                                           {commune.lib_commune}
                                         </span>
+                                      </div>
+                                      
+                                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                        <motion.button
+                                          onClick={() => openModifierCommuneModal(commune)}
+                                          className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-200"
+                                          whileHover={{ scale: 1.1 }}
+                                          whileTap={{ scale: 0.9 }}
+                                          title="Modifier la commune"
+                                        >
+                                          <Edit className="w-3.5 h-3.5" />
+                                        </motion.button>
+                                        
+                                        <motion.button
+                                          onClick={() => openSupprimerCommuneModal(commune)}
+                                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                          whileHover={{ scale: 1.1 }}
+                                          whileTap={{ scale: 0.9 }}
+                                          title="Supprimer la commune"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </motion.button>
                                       </div>
                                     </motion.div>
                                   ))}
@@ -395,6 +578,42 @@ const Localisations = () => {
           </motion.div>
         </main>
       </div>
+
+      {/* Modaux */}
+      <ModalVille
+        isOpen={villeModalOpen}
+        onClose={() => {
+          setVilleModalOpen(false);
+          setSelectedVille(null);
+        }}
+        onSubmit={selectedVille ? handleModifierVille : handleAjouterVille}
+        ville={selectedVille} // null pour ajout, objet ville pour modification
+        loading={loading}
+        error={error}
+      />
+
+      <ModalCommune
+        isOpen={communeModalOpen}
+        onClose={() => {
+          setCommuneModalOpen(false);
+          setSelectedVille(null);
+          setSelectedCommune(null);
+        }}
+        onSubmit={selectedCommune ? handleModifierCommune : handleAjouterCommune}
+        commune={selectedCommune} // null pour ajout, objet commune pour modification
+        selectedVille={selectedVille} // pour l'ajout avec ville présélectionnée
+        villes={villes}
+        loading={loading}
+        error={error}
+      />
+
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCloseDeleteModal}
+        entityName={getEntityName()}
+        isDeleting={loading}
+      />
     </div>
   );
 };
