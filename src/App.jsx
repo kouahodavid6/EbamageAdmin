@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 
 import Login from './pages/Auth/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
+import Notifications from "./pages/Notifications/Notifications"
 import Categories from './pages/Catégoties/categories';
 import Variations from './pages/Variations/Variations';
 import Boutiques from './pages/Boutiques/Boutiques';
@@ -93,6 +94,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/sendNotifications" 
+              element={
+                <ProtectedRoute>
+                  <Notifications />
                 </ProtectedRoute>
               } 
             />

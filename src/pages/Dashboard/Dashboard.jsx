@@ -1,27 +1,32 @@
 import { useState, useEffect } from "react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
+import RecentBoutiques from "./components/RecentBoutiques";
+import RecentClients from "./components/RecentClients";
 import {
   Users,
-  User,
-  ShoppingBag,
-  Package,
-  TrendingUp,
-  Activity,
-  CreditCard,
+  Bell,
   Store,
+  Package,
+  Activity,
   ArrowRight,
   Calendar,
-  Eye
+  Image,
+  Upload,
+  CheckCircle,
+  X,
+  Trash2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import useCommandeStore from "../../stores/commande.store";
 import useBoutiqueStore from "../../stores/boutique.store";
 import useClientStore from "../../stores/client.store";
 import useCategorieStore from "../../stores/categorie.store";
+import usePubliciteStore from "../../stores/publicites.store";
 import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -29,14 +34,23 @@ const Dashboard = () => {
     stats: true,
     activities: true,
     boutiques: true,
-    clients: true,
-    performance: true
+    clients: true
   });
+
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   const { commandes = [], fetchCommandes } = useCommandeStore();
   const { boutiques = [], fetchBoutiques } = useBoutiqueStore();
   const { clients = [], fetchClients } = useClientStore();
   const { fetchCategories } = useCategorieStore();
+  const { 
+    sendToClients, 
+    loading: publiciteLoading, 
+    error, 
+    success, 
+    clearState 
+  } = usePubliciteStore();
 
   useEffect(() => {
     const loadData = async () => {
@@ -51,8 +65,7 @@ const Dashboard = () => {
           stats: false,
           activities: false,
           boutiques: false,
-          clients: false,
-          performance: false
+          clients: false
         });
       } catch (error) {
         console.error("Erreur chargement données:", error);
@@ -60,14 +73,25 @@ const Dashboard = () => {
           stats: false,
           activities: false,
           boutiques: false,
-          clients: false,
-          performance: false
+          clients: false
         });
       }
     };
 
     loadData();
   }, [fetchCommandes, fetchBoutiques, fetchClients, fetchCategories]);
+
+  // Gérer les succès et erreurs avec les toasts
+  useEffect(() => {
+    if (success) {
+      toast.success('Publicité envoyée avec succès !');
+      clearState();
+    }
+    if (error) {
+      toast.error(error);
+      clearState();
+    }
+  }, [success, error, clearState]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "Date inconnue";
@@ -78,6 +102,87 @@ const Dashboard = () => {
       return "Date invalide";
     }
   };
+
+  // Gérer la sélection d'images multiples
+  const handleImageSelect = (event) => {
+    const files = Array.from(event.target.files);
+    
+    if (files.length === 0) return;
+
+    // Vérifier la taille de chaque fichier
+    const validFiles = files.filter(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`L'image "${file.name}" dépasse la taille maximale de 5MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    // Ajouter les nouveaux fichiers à la liste existante
+    setSelectedImages(prev => [...prev, ...validFiles]);
+
+    // Créer les previews pour les nouveaux fichiers
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreviews(prev => [...prev, {
+          id: Math.random().toString(36).substr(2, 9),
+          url: e.target.result,
+          name: file.name
+        }]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    clearState();
+    
+    // Réinitialiser l'input file pour permettre la sélection des mêmes fichiers
+    event.target.value = '';
+  };
+
+  const removeImage = (index) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const clearAllImages = () => {
+    setSelectedImages([]);
+    setImagePreviews([]);
+    clearState();
+  };
+
+// Envoyer les publicités (version corrigée)
+const handleSendPublicite = async () => {
+  if (selectedImages.length === 0) {
+    toast.error('Veuillez sélectionner au moins une image');
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+
+    // ✅ Envoi multiple, compatible Laravel
+    selectedImages.forEach((image) => {
+      formData.append('images[]', image);
+    });
+
+    // ✅ Un seul appel au lieu d'une boucle
+    await sendToClients(formData);
+
+    toast.success(`${selectedImages.length} publicité(s) envoyée(s) avec succès aux clients !`);
+
+    // Reset après succès
+    setSelectedImages([]);
+    setImagePreviews([]);
+    clearState();
+  } catch (error) {
+    console.error('Erreur envoi publicité:', error);
+    toast.error('Échec de l’envoi des publicités');
+  }
+};
+
 
   // Variants d'animation
   const containerVariants = {
@@ -107,83 +212,36 @@ const Dashboard = () => {
     tap: { scale: 0.95, transition: { duration: 0.1 } }
   };
 
-  const LoadingSpinner = ({ size = "medium" }) => (
-    <motion.div
-      animate={{ rotate: 360 }}
-      transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-      className={`rounded-full border-t-2 border-b-2 border-emerald-500 ${
-        size === "small" ? "h-6 w-6" : 
-        size === "medium" ? "h-8 w-8" : 
-        "h-12 w-12"
-      }`}
-    />
-  );
-
-  const calculateStats = () => {
-    const today = new Date().toISOString().split("T")[0];
-
-    const commandesToday =
-      commandes?.filter(
-        (c) =>
-          c?.created_at &&
-          new Date(c.created_at).toISOString().split("T")[0] === today
-      )?.length || 0;
-
-    const newClientsToday =
-      clients?.filter(
-        (c) =>
-          c?.created_at &&
-          new Date(c.created_at).toISOString().split("T")[0] === today
-      )?.length || 0;
-
-    const totalProductsSold =
-      commandes?.reduce(
-        (acc, cmd) =>
-          acc +
-          (cmd?.articles?.reduce((sum, art) => sum + (art?.quantite || 0), 0) ||
-            0),
-        0
-      ) || 0;
-
-    const dailyRevenue =
-      commandes?.reduce(
-        (sum, cmd) => sum + (cmd?.prix_total_commande || 0),
-        0
-      ) || 0;
-
+  const actionsPages = () => {
     return [
       {
-        title: "Commandes aujourd'hui",
-        value: commandesToday,
-        change: "+0%",
-        icon: ShoppingBag,
+        title: "Envoyer des notifications",
+        icon: Bell,
+        path: '/sendNotifications',
         color: "bg-emerald-100",
         textColor: "text-emerald-600",
         borderColor: "border-emerald-200"
       },
       {
-        title: "Nouveaux clients",
-        value: newClientsToday,
-        change: "+0%",
-        icon: Users,
+        title: "Gérer les boutiques",
+        icon: Store,
+        path: '/boutiques',
         color: "bg-blue-100",
         textColor: "text-blue-600",
         borderColor: "border-blue-200"
       },
       {
-        title: "Produits vendus",
-        value: totalProductsSold,
-        change: "+0%",
-        icon: Package,
+        title: "Gérer les clients",
+        icon: Users,
+        path: '/clients',
         color: "bg-purple-100",
         textColor: "text-purple-600",
         borderColor: "border-purple-200"
       },
       {
-        title: "Revenu journalier",
-        value: `${dailyRevenue.toLocaleString("fr-FR")} FCFA`,
-        change: "+0%",
-        icon: CreditCard,
+        title: "Voir les commandes",
+        icon: Package,
+        path: '/commandes',
         color: "bg-green-100",
         textColor: "text-green-600",
         borderColor: "border-green-200"
@@ -198,19 +256,6 @@ const Dashboard = () => {
     time: formatDate(cmd?.created_at),
     amount: `${(cmd?.prix_total_commande || 0).toLocaleString("fr-FR")} FCFA`,
   }));
-
-const getRecent = (arr) => {
-  const n = arr.length;
-  const start = Math.max(n - 3);
-  return arr.slice(start, n);
-};
-
-// Utilisation
-const recentBoutiques = getRecent(boutiques || []);
-const recentClients = getRecent(clients || []);
-
-  const skeletonCountClt = clients?.length > 0 ? clients.length : 3;
-  const skeletonCountBtq = boutiques?.length > 0 ? boutiques.length : 3;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50/20 flex flex-col md:flex-row">
@@ -291,7 +336,7 @@ const recentClients = getRecent(clients || []);
             </div>
           </motion.div>
 
-          {/* Cartes de statistiques */}
+          {/* Cartes d'actions rapides */}
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
             variants={containerVariants}
@@ -319,40 +364,40 @@ const recentClients = getRecent(clients || []);
                 </motion.div>
               ))
             ) : (
-              // Actual stats content
-              calculateStats().map((stat, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 hover:shadow-xl transition-all duration-300"
-                  variants={itemVariants}
-                  whileHover="hover"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-emerald-600/80 mb-1">
-                        {stat.title}
-                      </p>
-                      <h3 className="text-2xl font-bold text-emerald-900 mt-1">{stat.value}</h3>
-                      <p className={`text-sm mt-1 font-medium ${stat.textColor}`}>
-                        {stat.change}
-                      </p>
+              // Actual actions content - VERSION CLIQUABLE
+              actionsPages().map((action, index) => (
+                <Link key={index} to={action.path}>
+                  <motion.div
+                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+                    variants={itemVariants}
+                    whileHover="hover"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-emerald-600/80 mb-1">
+                          {action.title}
+                        </p>
+                        <h3 className="text-2xl font-bold text-emerald-900 mt-1">
+                          {/* Vous pouvez ajouter des valeurs dynamiques ici si besoin */}
+                        </h3>
+                      </div>
+                      <motion.div 
+                        className={`p-3 rounded-xl ${action.color} border ${action.borderColor} group-hover:scale-110 transition-transform duration-300`}
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <action.icon className={`w-6 h-6 ${action.textColor}`} />
+                      </motion.div>
                     </div>
-                    <motion.div 
-                      className={`p-3 rounded-xl ${stat.color} border ${stat.borderColor}`}
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <stat.icon className={`w-6 h-6 ${stat.textColor}`} />
-                    </motion.div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </Link>
               ))
             )}
           </motion.div>
 
-          {/* Graphique et Activités */}
+          {/* Publicités et Activités */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Graphique (placeholder) */}
+            {/* Section Publicités - VERSION MULTI-IMAGES */}
             <motion.div 
               className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 lg:col-span-2"
               initial={{ opacity: 0 }}
@@ -361,39 +406,144 @@ const recentClients = getRecent(clients || []);
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-emerald-900">
-                  Performance des ventes
+                  Publicités pour les Clients
                 </h2>
-                <motion.select 
-                  className="text-sm border border-emerald-200 rounded-lg px-3 py-2 bg-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-300 transition-all duration-300"
-                  whileFocus={{ scale: 1.02 }}
-                  disabled={loading.performance}
-                >
-                  <option>7 derniers jours</option>
-                  <option>30 derniers jours</option>
-                  <option>Cette année</option>
-                </motion.select>
+                {selectedImages.length > 0 && (
+                  <motion.button
+                    onClick={clearAllImages}
+                    className="text-red-500 hover:text-red-700 font-medium text-sm flex items-center gap-2 transition-all duration-300"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Tout supprimer
+                  </motion.button>
+                )}
               </div>
-              {loading.performance ? (
-                <div className="h-64 bg-gradient-to-br from-emerald-50 to-green-50/30 rounded-xl border border-emerald-100 flex items-center justify-center">
-                  <LoadingSpinner />
-                </div>
-              ) : (
-                <div className="h-64 bg-gradient-to-br from-emerald-50 to-green-50/30 rounded-xl border border-emerald-100 flex items-center justify-center">
-                  <div className="text-center p-4">
-                    <TrendingUp className="w-16 h-16 text-emerald-300 mx-auto mb-3" />
-                    <p className="text-emerald-600/70 font-medium">
-                      {commandes?.length > 0
-                        ? "Graphique des performances"
-                        : "Aucune donnée disponible"}
-                    </p>
-                    {commandes?.length === 0 && (
-                      <p className="text-emerald-500/60 text-sm mt-1">
-                        Les données apparaîtront ici
+              
+              <div className="space-y-6">
+                {/* Zone de dépôt d'image - VERSION MULTI-IMAGES */}
+                <motion.div 
+                  className="border-2 border-dashed border-emerald-300 rounded-2xl p-6 text-center bg-emerald-50/50 hover:bg-emerald-50 transition-all duration-300 cursor-pointer"
+                  whileHover={{ scale: 1.02 }}
+                  onClick={() => document.getElementById('image-upload').click()}
+                >
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                  
+                  {imagePreviews.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-64 overflow-y-auto">
+                        {imagePreviews.map((preview, index) => (
+                          <motion.div 
+                            key={preview.id}
+                            className="relative bg-white rounded-xl border border-emerald-200 overflow-hidden group"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.1 }}
+                          >
+                            <img 
+                              src={preview.url} 
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-24 object-cover"
+                            />
+                            <div className="p-2">
+                              <p className="text-xs text-emerald-600 truncate">
+                                {preview.name}
+                              </p>
+                            </div>
+                            <motion.button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeImage(index);
+                              }}
+                              className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                              whileHover={{ scale: 1.1 }}
+                            >
+                              <X className="w-3 h-3" />
+                            </motion.button>
+                          </motion.div>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-center gap-4">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById('image-upload').click();
+                          }}
+                          className="text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center gap-2"
+                        >
+                          <Upload className="w-4 h-4" />
+                          Ajouter plus d'images
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <Upload className="w-8 h-8 text-emerald-500" />
+                      </div>
+                      <div>
+                        <p className="text-emerald-700 font-semibold">
+                          Cliquez pour sélectionner des images
+                        </p>
+                        <p className="text-emerald-600/70 text-sm mt-1">
+                          Formats supportés: JPG, PNG, GIF • Max 5MB par image
+                        </p>
+                        <p className="text-emerald-500/60 text-xs mt-1">
+                          (Maintenez Ctrl pour sélectionner plusieurs images)
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+
+                {/* Compteur d'images */}
+                {selectedImages.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-blue-800 font-medium text-sm">
+                        {selectedImages.length} image(s) sélectionnée(s)
                       </p>
-                    )}
+                      <p className="text-blue-600/80 text-xs">
+                        Taille totale: {(
+                          selectedImages.reduce((total, file) => total + file.size, 0) / (1024 * 1024)
+                        ).toFixed(2)} MB
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Bouton d'envoi */}
+                <motion.button 
+                  className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg transition-all duration-300 disabled:cursor-not-allowed"
+                  whileHover={selectedImages.length > 0 && !publiciteLoading ? { scale: 1.02 } : {}}
+                  whileTap={selectedImages.length > 0 && !publiciteLoading ? { scale: 0.98 } : {}}
+                  onClick={handleSendPublicite}
+                  disabled={selectedImages.length === 0 || publiciteLoading}
+                >
+                  {publiciteLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Envoi en cours... ({selectedImages.length} image(s))
+                    </>
+                  ) : (
+                    <>
+                      <Image className="w-5 h-5" />
+                      {selectedImages.length > 1 
+                        ? `Envoyer ${selectedImages.length} images aux Clients`
+                        : 'Envoyer aux Clients'
+                      }
+                    </>
+                  )}
+                </motion.button>
+              </div>
             </motion.div>
 
             {/* Activités récentes */}
@@ -462,212 +612,36 @@ const recentClients = getRecent(clients || []);
                 </div>
               )}
               {!loading.activities && commandes?.length > 0 && (
-                <motion.button 
-                  className="w-full mt-4 py-2 text-emerald-600 hover:text-emerald-700 font-medium flex items-center justify-center gap-2 transition-all duration-300"
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  <span>Voir toutes les activités</span>
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
+                <Link to="/commandes">
+                  <motion.button 
+                    className="w-full mt-4 py-2 text-emerald-600 hover:text-emerald-700 font-medium flex items-center justify-center gap-2 transition-all duration-300"
+                    variants={buttonVariants}
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <span>Voir toutes les activités</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                </Link>
               )}
             </motion.div>
           </div>
 
           {/* Boutiques et Clients récents */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Boutiques récentes */}
-            <motion.div 
-              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-100 rounded-lg">
-                    <Store className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <h2 className="text-sm sm:text-lg font-semibold text-emerald-900">
-                    Boutiques récentes
-                  </h2>
-                </div>
-                {!loading.boutiques && boutiques?.length > 0 && (
-                  <Link to="/boutiques">
-                    <motion.button 
-                      className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1 transition-all duration-300 text-sm"
-                      variants={buttonVariants}
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      Voir toutes
-                      <Eye className="w-4 h-4" />
-                    </motion.button>
-                  </Link>
-                )}
-              </div>
-              {loading.boutiques ? (
-                <div className="space-y-4">
-                  {Array(skeletonCountBtq).fill(0).map((_, index) => (
-                    <div key={index} className="flex items-center p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                      <div className="bg-emerald-200 border border-emerald-300 w-10 h-10 rounded-lg mr-3 flex items-center justify-center animate-pulse"></div>
-                      <div className="flex-1">
-                        <div className="h-4 bg-emerald-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                        <div className="h-3 bg-emerald-200 rounded w-1/2 animate-pulse"></div>
-                      </div>
-                      <div className="text-emerald-300">
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentBoutiques?.length > 0 ? (
-                    recentBoutiques
-                      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // ✅ tri du plus récent au plus ancien
-                      .map((boutique, index) => {
-                        // Récupérer le nom et l'initiale
-                        const nom = boutique?.nom_btq?.toUpperCase() || "Boutique";
-                        const initiale = nom.charAt(0);
+            <RecentBoutiques
+              boutiques={boutiques}
+              loading={loading.boutiques}
+              formatDate={formatDate}
+              buttonVariants={buttonVariants}
+            />
 
-                        return (
-                          <motion.div 
-                            key={boutique.hashid} 
-                            className="flex items-center gap-3 p-3 bg-emerald-50/50 rounded-xl border border-emerald-100 hover:bg-white transition-all duration-300"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 + (index * 0.1) }}
-                            whileHover={{ x: 5 }}
-                          >
-                            {/* Avatar avec initiale */}
-                            <div className="relative">
-                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-white font-semibold shadow-lg">
-                                    {initiale}
-                                </div>
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white">
-                                    <Store className="w-2 h-2 text-white" />
-                                </div>
-                            </div>
-
-                            {/* Infos boutique */}
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-emerald-900 text-sm">
-                                {boutique.nom_btq}
-                              </h4>
-                              <p className="text-xs text-emerald-600/70">
-                                Inscrite le {formatDate(boutique.created_at)}
-                              </p>
-                            </div>
-                          </motion.div>
-                        );
-                      })
-                  ) : (
-                    <div className="text-center py-8">
-                      <Store className="w-12 h-12 text-emerald-300 mx-auto mb-3" />
-                      <p className="text-emerald-600/70 font-medium">Aucune boutique récente</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </motion.div>
-
-            {/* Clients récents */}
-            <motion.div 
-              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-100 rounded-lg">
-                    <Users className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <h2 className="text-sm sm:text-sm font-semibold text-emerald-900">
-                    Nouveaux clients
-                  </h2>
-                </div>
-                {!loading.clients && clients?.length > 0 && (
-                  <Link to="/clients">
-                    <motion.button 
-                      className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1 transition-all duration-300 text-sm"
-                      variants={buttonVariants}
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      Voir tous
-                      <Eye className="w-4 h-4" />
-                    </motion.button>
-                  </Link>
-                )}
-              </div>
-              {loading.clients ? (
-                <div className="space-y-4">
-                  {Array(skeletonCountClt).fill(0).map((_, index) => (
-                    <div key={index} className="flex items-center p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                      <div className="bg-emerald-200 w-10 h-10 rounded-lg mr-3 flex items-center justify-center animate-pulse"></div>
-                      <div className="flex-1">
-                        <div className="h-4 bg-emerald-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                        <div className="h-3 bg-emerald-200 rounded w-1/2 animate-pulse"></div>
-                      </div>
-                      <div className="text-emerald-300">
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentClients?.length > 0 ? (
-                    recentClients
-                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) //
-                    .map((client, index) => {
-                      // Récupérer le nom et l'initiale
-                      const nom = client?.nom_clt?.toUpperCase() || "Client";
-                      const initiale = nom.charAt(0);
-
-                      return (
-                        <motion.div 
-                            key={client.hashid} 
-                            className="flex items-center gap-3 p-3 bg-emerald-50/50 rounded-xl border border-emerald-100 hover:bg-white transition-all duration-300"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 + (index * 0.1) }}
-                            whileHover={{ x: 5 }}
-                          >
-                            {/* Avatar avec initiale */}
-                            <div className="relative">
-                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center text-white font-semibold shadow-lg">
-                                    {initiale}
-                                </div>
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white">
-                                    <User className="w-2 h-2 text-white" />
-                                </div>
-                            </div>
-
-                            {/* Infos boutique */}
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-emerald-900 text-sm">
-                                {client.nom_clt}
-                              </h4>
-                              <p className="text-xs text-emerald-600/70">
-                                Inscrite le {formatDate(client.created_at)}
-                              </p>
-                            </div>
-                          </motion.div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center py-8">
-                      <Users className="w-12 h-12 text-emerald-300 mx-auto mb-3" />
-                      <p className="text-emerald-600/70 font-medium">Aucun nouveau client</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </motion.div>
+            <RecentClients
+              clients={clients}
+              loading={loading.clients}
+              formatDate={formatDate}
+              buttonVariants={buttonVariants}
+            />
           </div>
         </main>
       </div>
