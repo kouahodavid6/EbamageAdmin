@@ -314,9 +314,7 @@ const handleSendPublicite = async () => {
                   Bon retour, Administrateur
                 </h1>
                 <p className="opacity-90 text-emerald-100">
-                  {commandes?.length > 0 ? 
-                    `Vous avez ${commandes.length} commandes à traiter` : 
-                    "Aucune commande aujourd'hui"}
+                  Continuez à administrer la gestion du système Ebamage
                 </p>
               </div>
               <motion.div
