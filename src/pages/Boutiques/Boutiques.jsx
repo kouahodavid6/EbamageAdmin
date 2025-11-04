@@ -405,14 +405,6 @@ const Boutiques = () => {
                       >
                         Supprimer
                       </motion.button>
-                      <motion.button
-                        className="flex-1 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-medium text-sm transition-all duration-300"
-                        variants={buttonVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        Contacter
-                      </motion.button>
                     </motion.div>
                   </div>
                 </motion.div>
