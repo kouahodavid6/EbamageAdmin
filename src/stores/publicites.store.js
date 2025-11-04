@@ -6,7 +6,7 @@ const usePubliciteStore = create((set) => ({
     error: null,
     success: false,
 
-    // Envoyer une publicité aux clients
+    // Envoyer une publicité aux clients (UNE SEULE IMAGE)
     sendToClients: async (formData) => {
         set({ loading: true, error: null, success: false });
         try {

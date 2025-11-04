@@ -1,39 +1,58 @@
 import { useState, useEffect } from "react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
-import { Search, Filter, User, Store, Package, Clock, CreditCard, MapPin, CheckCircle, XCircle, Truck } from 'lucide-react';
+import { Search, Filter, User, Store, Package, Clock, CreditCard, MapPin, CheckCircle, XCircle, Truck, Eye, X } from 'lucide-react';
 import useCommandeStore from "../../stores/commande.store";
 import { format } from 'date-fns';
 import fr from 'date-fns/locale/fr';
 import CommandeDetailModal from "./components/CommandeDetailModal";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Commandes = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCommande, setSelectedCommande] = useState(null);
-    const { commandes = [], loading, error, fetchCommandes } = useCommandeStore();
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [localFilters, setLocalFilters] = useState({
+        statut: '',
+        localisation: ''
+    });
+
+    const { 
+        filteredCommandes = [], 
+        loading, 
+        error, 
+        fetchCommandes, 
+        filtrerCommandes,
+        appliquerFiltres,
+        reinitialiserFiltres,
+        // filters 
+    } = useCommandeStore();
 
     useEffect(() => {
         fetchCommandes();
     }, [fetchCommandes]);
 
-    const filteredCommandes = (commandes || []).filter(commande => {
-        try {
-            return (
-                commande?.client?.nom_clt?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
-                commande?.articles?.some(article => 
-                article?.nom_article?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
-                article?.boutique?.nom_btq?.toLowerCase()?.includes(searchTerm.toLowerCase())
-                )
-            );
-        } catch (e) {
-            console.error("Erreur de filtrage", e);
-            return false;
-        }
-    });
+    // Appliquer les filtres locaux
+    useEffect(() => {
+        appliquerFiltres(localFilters);
+    }, [localFilters, appliquerFiltres]);
 
-    const skeletonCount = commandes?.length > 0 ? commandes.length : 1;
+    // Gestion de la recherche par ville/commune
+    const handleRechercheLocalisation = async (recherche) => {
+        if (recherche.trim()) {
+            try {
+                await filtrerCommandes(recherche);
+            } catch (error) {
+                // L'erreur est gérée dans le store
+            }
+        } else {
+            // Si la recherche est vide, recharger toutes les commandes
+            fetchCommandes();
+        }
+    };
+
+    const skeletonCount = filteredCommandes?.length > 0 ? filteredCommandes.length : 1;
 
     const getStatusBadge = (status) => {
         const baseClasses = "px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1";
@@ -41,6 +60,7 @@ const Commandes = () => {
             case 'En attente':
                 return <span className={`bg-amber-100 text-amber-800 ${baseClasses}`}><Clock className="w-3 h-3" /> {status}</span>;
             case 'Validée':
+            case 'Confirmée':
                 return <span className={`bg-emerald-100 text-emerald-800 ${baseClasses}`}><CheckCircle className="w-3 h-3" /> {status}</span>;
             case 'Annulée':
                 return <span className={`bg-red-100 text-red-800 ${baseClasses}`}><XCircle className="w-3 h-3" /> {status}</span>;
@@ -55,6 +75,25 @@ const Commandes = () => {
         const date = new Date(dateString);
         return format(date, 'dd MMM yyyy HH:mm', { locale: fr });
     };
+
+    // Options de statut pour le filtre
+    const statutOptions = [
+        { value: '', label: 'Tous les statuts' },
+        { value: 'En attente', label: 'En attente' },
+        { value: 'Confirmée', label: 'Confirmée' },
+        { value: 'Livrée', label: 'Livrée' },
+        { value: 'Annulée', label: 'Annulée' }
+    ];
+
+    // Réinitialiser tous les filtres
+    const handleReinitialiserFiltres = () => {
+        setLocalFilters({ statut: '', localisation: '' });
+        setSearchTerm('');
+        reinitialiserFiltres();
+    };
+
+    // Vérifier si des filtres sont actifs
+    const hasActiveFilters = localFilters.statut || localFilters.localisation || searchTerm;
 
     // Animations
     const containerVariants = {
@@ -148,7 +187,7 @@ const Commandes = () => {
                         )}
                     </motion.div>
 
-                    {/* Barre de recherche */}
+                    {/* Barre de recherche et filtres */}
                     <motion.div 
                         className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
                         initial={{ opacity: 0 }}
@@ -162,14 +201,18 @@ const Commandes = () => {
                                 </div>
                                 <motion.input
                                     type="text"
-                                    placeholder="Rechercher une commande par client, article ou boutique..."
+                                    placeholder="Rechercher par ville ou commune (ex: Abidjan, Treichville...)"
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value);
+                                        handleRechercheLocalisation(e.target.value);
+                                    }}
                                     className="block w-full pl-10 pr-4 py-3 border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 transition-all duration-300 bg-white/50"
                                     whileFocus={{ scale: 1.01 }}
                                 />
                             </div>
                             <motion.button 
+                                onClick={() => setFiltersOpen(!filtersOpen)}
                                 className="flex-shrink-0 flex items-center justify-center gap-2 px-6 py-3 border border-emerald-300 rounded-xl hover:bg-emerald-50 transition-all duration-300 whitespace-nowrap font-medium text-emerald-700"
                                 style={{ height: '48px' }}
                                 variants={buttonVariants}
@@ -178,8 +221,73 @@ const Commandes = () => {
                             >
                                 <Filter className="w-5 h-5" />
                                 <span>Filtres</span>
+                                {hasActiveFilters && (
+                                    <span className="bg-emerald-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                        !
+                                    </span>
+                                )}
                             </motion.button>
                         </div>
+
+                        {/* Panneau des filtres */}
+                        <AnimatePresence>
+                            {filtersOpen && (
+                                <motion.div 
+                                    className="mt-4 p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                                        {/* Filtre par statut */}
+                                        <div className="flex-1 min-w-0">
+                                            <label className="block text-sm font-medium text-emerald-700 mb-2">
+                                                Statut de la commande
+                                            </label>
+                                            <select
+                                                value={localFilters.statut}
+                                                onChange={(e) => setLocalFilters(prev => ({ ...prev, statut: e.target.value }))}
+                                                className="w-full px-3 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 bg-white"
+                                            >
+                                                {statutOptions.map(option => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Filtre par localisation */}
+                                        <div className="flex-1 min-w-0">
+                                            <label className="block text-sm font-medium text-emerald-700 mb-2">
+                                                Localisation (ville/commune)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Ex: Abobo, Cocody..."
+                                                value={localFilters.localisation}
+                                                onChange={(e) => setLocalFilters(prev => ({ ...prev, localisation: e.target.value }))}
+                                                className="w-full px-3 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 bg-white"
+                                            />
+                                        </div>
+
+                                        {/* Bouton réinitialiser */}
+                                        <motion.button
+                                            onClick={handleReinitialiserFiltres}
+                                            disabled={!hasActiveFilters}
+                                            className="flex-shrink-0 flex items-center gap-2 px-4 py-2 text-emerald-600 hover:text-emerald-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
+                                            variants={buttonVariants}
+                                            whileHover={hasActiveFilters ? "hover" : {}}
+                                            whileTap={hasActiveFilters ? "tap" : {}}
+                                        >
+                                            <X className="w-4 h-4" />
+                                            Réinitialiser
+                                        </motion.button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </motion.div>
 
                     {/* Liste des commandes */}
@@ -220,23 +328,32 @@ const Commandes = () => {
                         >
                             <Package className="w-16 h-16 text-emerald-300 mx-auto mb-4" />
                             <h3 className="text-lg font-semibold text-emerald-900 mb-2">
-                                {searchTerm ? "Aucune commande trouvée" : "Aucune commande disponible"}
+                                {hasActiveFilters ? "Aucune commande correspondante" : "Aucune commande disponible"}
                             </h3>
                             <p className="text-emerald-600/70">
-                                {searchTerm 
-                                    ? "Essayez de modifier vos critères de recherche" 
+                                {hasActiveFilters 
+                                    ? "Essayez de modifier vos critères de filtrage" 
                                     : "Les commandes apparaîtront ici une fois passées"
                                 }
                             </p>
+                            {hasActiveFilters && (
+                                <motion.button
+                                    onClick={handleReinitialiserFiltres}
+                                    className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    Réinitialiser les filtres
+                                </motion.button>
+                            )}
                         </motion.div>
                         ) : (
                             filteredCommandes.map((commande) => (
                                 <motion.div 
                                     key={commande.hashid} 
-                                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 overflow-hidden cursor-pointer group"
+                                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 overflow-hidden group"
                                     variants={itemVariants}
                                     whileHover="hover"
-                                    onClick={() => setSelectedCommande(commande)}
                                 >
                                     <div className="p-6">
                                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -250,7 +367,7 @@ const Commandes = () => {
                                                 </motion.div>
                                                 <div>
                                                     <h3 className="font-semibold text-emerald-900 text-lg">
-                                                        Commande #{commande.hashid.substring(0, 8)}
+                                                        Commande - {commande.code_commande}
                                                     </h3>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <User className="w-4 h-4 text-emerald-500" />
@@ -278,13 +395,27 @@ const Commandes = () => {
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="w-4 h-4 text-emerald-500" />
-                                                    <span>{commande.localisation.commune}</span>
+                                                    <span>{commande.localisation.commune}, {commande.localisation.ville}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <Clock className="w-4 h-4 text-emerald-500" />
                                                     <span>{formatDate(commande.created_at)}</span>
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        {/* Bouton Voir détails */}
+                                        <div className="mt-4 flex justify-end">
+                                            <motion.button
+                                                onClick={() => setSelectedCommande(commande)}
+                                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 font-medium"
+                                                variants={buttonVariants}
+                                                whileHover="hover"
+                                                whileTap="tap"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                Voir détails
+                                            </motion.button>
                                         </div>
                                     </div>
                                 </motion.div>

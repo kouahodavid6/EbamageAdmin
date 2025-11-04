@@ -37,8 +37,8 @@ const Dashboard = () => {
     clients: true
   });
 
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const { commandes = [], fetchCommandes } = useCommandeStore();
   const { boutiques = [], fetchBoutiques } = useBoutiqueStore();
@@ -86,6 +86,7 @@ const Dashboard = () => {
     if (success) {
       toast.success('Publicité envoyée avec succès !');
       clearState();
+      clearImage();
     }
     if (error) {
       toast.error(error);
@@ -103,86 +104,68 @@ const Dashboard = () => {
     }
   };
 
-  // Gérer la sélection d'images multiples
+  // Gérer la sélection d'une seule image
   const handleImageSelect = (event) => {
-    const files = Array.from(event.target.files);
+    const file = event.target.files[0];
     
-    if (files.length === 0) return;
+    if (!file) return;
 
-    // Vérifier la taille de chaque fichier
-    const validFiles = files.filter(file => {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`L'image "${file.name}" dépasse la taille maximale de 5MB`);
-        return false;
-      }
-      return true;
-    });
+    // Vérifier la taille du fichier
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("L'image dépasse la taille maximale de 5MB");
+      return;
+    }
 
-    if (validFiles.length === 0) return;
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      toast.error("Veuillez sélectionner une image valide");
+      return;
+    }
 
-    // Ajouter les nouveaux fichiers à la liste existante
-    setSelectedImages(prev => [...prev, ...validFiles]);
+    setSelectedImage(file);
 
-    // Créer les previews pour les nouveaux fichiers
-    validFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreviews(prev => [...prev, {
-          id: Math.random().toString(36).substr(2, 9),
-          url: e.target.result,
-          name: file.name
-        }]);
-      };
-      reader.readAsDataURL(file);
-    });
+    // Créer la preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview({
+        url: e.target.result,
+        name: file.name
+      });
+    };
+    reader.readAsDataURL(file);
 
     clearState();
     
-    // Réinitialiser l'input file pour permettre la sélection des mêmes fichiers
+    // Réinitialiser l'input file
     event.target.value = '';
   };
 
-  const removeImage = (index) => {
-    setSelectedImages(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
-  const clearAllImages = () => {
-    setSelectedImages([]);
-    setImagePreviews([]);
-    clearState();
+  // Envoyer la publicité (UNE SEULE IMAGE)
+  const handleSendPublicite = async () => {
+    if (!selectedImage) {
+      toast.error('Veuillez sélectionner une image');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+
+      // ✅ UNE SEULE IMAGE avec la clé "images"
+      formData.append('images', selectedImage);
+
+      await sendToClients(formData);
+
+      // Le reset se fait dans le useEffect du succès
+    } catch (error) {
+      console.error('Erreur envoi publicité:', error);
+      // L'erreur est déjà gérée par le store et affichée dans le toast
+    }
   };
-
-// Envoyer les publicités (version corrigée)
-const handleSendPublicite = async () => {
-  if (selectedImages.length === 0) {
-    toast.error('Veuillez sélectionner au moins une image');
-    return;
-  }
-
-  try {
-    const formData = new FormData();
-
-    // ✅ Envoi multiple, compatible Laravel
-    selectedImages.forEach((image) => {
-      formData.append('images[]', image);
-    });
-
-    // ✅ Un seul appel au lieu d'une boucle
-    await sendToClients(formData);
-
-    toast.success(`${selectedImages.length} publicité(s) envoyée(s) avec succès aux clients !`);
-
-    // Reset après succès
-    setSelectedImages([]);
-    setImagePreviews([]);
-    clearState();
-  } catch (error) {
-    console.error('Erreur envoi publicité:', error);
-    toast.error('Échec de l’envoi des publicités');
-  }
-};
-
 
   // Variants d'animation
   const containerVariants = {
@@ -395,7 +378,7 @@ const handleSendPublicite = async () => {
 
           {/* Publicités et Activités */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Section Publicités - VERSION MULTI-IMAGES */}
+            {/* Section Publicités - VERSION UNE SEULE IMAGE */}
             <motion.div 
               className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 lg:col-span-2"
               initial={{ opacity: 0 }}
@@ -404,23 +387,23 @@ const handleSendPublicite = async () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-emerald-900">
-                  Publicités pour les Clients
+                  Publicité pour les Clients
                 </h2>
-                {selectedImages.length > 0 && (
+                {selectedImage && (
                   <motion.button
-                    onClick={clearAllImages}
+                    onClick={clearImage}
                     className="text-red-500 hover:text-red-700 font-medium text-sm flex items-center gap-2 transition-all duration-300"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <Trash2 className="w-4 h-4" />
-                    Tout supprimer
+                    Supprimer
                   </motion.button>
                 )}
               </div>
               
               <div className="space-y-6">
-                {/* Zone de dépôt d'image - VERSION MULTI-IMAGES */}
+                {/* Zone de dépôt d'image - VERSION UNE SEULE IMAGE */}
                 <motion.div 
                   className="border-2 border-dashed border-emerald-300 rounded-2xl p-6 text-center bg-emerald-50/50 hover:bg-emerald-50 transition-all duration-300 cursor-pointer"
                   whileHover={{ scale: 1.02 }}
@@ -430,46 +413,38 @@ const handleSendPublicite = async () => {
                     id="image-upload"
                     type="file"
                     accept="image/*"
-                    multiple
                     onChange={handleImageSelect}
                     className="hidden"
                   />
                   
-                  {imagePreviews.length > 0 ? (
+                  {imagePreview ? (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-64 overflow-y-auto">
-                        {imagePreviews.map((preview, index) => (
-                          <motion.div 
-                            key={preview.id}
-                            className="relative bg-white rounded-xl border border-emerald-200 overflow-hidden group"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1 }}
-                          >
-                            <img 
-                              src={preview.url} 
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-24 object-cover"
-                            />
-                            <div className="p-2">
-                              <p className="text-xs text-emerald-600 truncate">
-                                {preview.name}
-                              </p>
-                            </div>
-                            <motion.button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeImage(index);
-                              }}
-                              className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                              whileHover={{ scale: 1.1 }}
-                            >
-                              <X className="w-3 h-3" />
-                            </motion.button>
-                          </motion.div>
-                        ))}
+                      <div className="relative bg-white rounded-xl border border-emerald-200 overflow-hidden max-w-md mx-auto">
+                        <img 
+                          src={imagePreview.url} 
+                          alt="Preview"
+                          className="w-full h-48 object-contain"
+                        />
+                        <div className="p-4">
+                          <p className="text-sm text-emerald-600 font-medium truncate">
+                            {imagePreview.name}
+                          </p>
+                          <p className="text-xs text-emerald-500 mt-1">
+                            {(selectedImage.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+                        <motion.button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            clearImage();
+                          }}
+                          className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300"
+                          whileHover={{ scale: 1.1 }}
+                        >
+                          <X className="w-3 h-3" />
+                        </motion.button>
                       </div>
-                      <div className="flex items-center justify-center gap-4">
+                      <div className="flex items-center justify-center">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
@@ -478,7 +453,7 @@ const handleSendPublicite = async () => {
                           className="text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center gap-2"
                         >
                           <Upload className="w-4 h-4" />
-                          Ajouter plus d'images
+                          Changer l'image
                         </button>
                       </div>
                     </div>
@@ -489,30 +464,28 @@ const handleSendPublicite = async () => {
                       </div>
                       <div>
                         <p className="text-emerald-700 font-semibold">
-                          Cliquez pour sélectionner des images
+                          Cliquez pour sélectionner une image
                         </p>
                         <p className="text-emerald-600/70 text-sm mt-1">
-                          Formats supportés: JPG, PNG, GIF • Max 5MB par image
+                          Formats supportés: JPG, PNG, GIF • Max 5MB
                         </p>
                         <p className="text-emerald-500/60 text-xs mt-1">
-                          (Maintenez Ctrl pour sélectionner plusieurs images)
+                          (Une seule image à la fois)
                         </p>
                       </div>
                     </div>
                   )}
                 </motion.div>
 
-                {/* Compteur d'images */}
-                {selectedImages.length > 0 && (
+                {/* Informations de l'image */}
+                {selectedImage && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                     <div className="flex items-center justify-between">
                       <p className="text-blue-800 font-medium text-sm">
-                        {selectedImages.length} image(s) sélectionnée(s)
+                        1 image sélectionnée
                       </p>
                       <p className="text-blue-600/80 text-xs">
-                        Taille totale: {(
-                          selectedImages.reduce((total, file) => total + file.size, 0) / (1024 * 1024)
-                        ).toFixed(2)} MB
+                        Taille: {(selectedImage.size / (1024 * 1024)).toFixed(2)} MB
                       </p>
                     </div>
                   </div>
@@ -521,23 +494,20 @@ const handleSendPublicite = async () => {
                 {/* Bouton d'envoi */}
                 <motion.button 
                   className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg transition-all duration-300 disabled:cursor-not-allowed"
-                  whileHover={selectedImages.length > 0 && !publiciteLoading ? { scale: 1.02 } : {}}
-                  whileTap={selectedImages.length > 0 && !publiciteLoading ? { scale: 0.98 } : {}}
+                  whileHover={selectedImage && !publiciteLoading ? { scale: 1.02 } : {}}
+                  whileTap={selectedImage && !publiciteLoading ? { scale: 0.98 } : {}}
                   onClick={handleSendPublicite}
-                  disabled={selectedImages.length === 0 || publiciteLoading}
+                  disabled={!selectedImage || publiciteLoading}
                 >
                   {publiciteLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Envoi en cours... ({selectedImages.length} image(s))
+                      Envoi en cours...
                     </>
                   ) : (
                     <>
                       <Image className="w-5 h-5" />
-                      {selectedImages.length > 1 
-                        ? `Envoyer ${selectedImages.length} images aux Clients`
-                        : 'Envoyer aux Clients'
-                      }
+                      Envoyer la publicité aux Clients
                     </>
                   )}
                 </motion.button>

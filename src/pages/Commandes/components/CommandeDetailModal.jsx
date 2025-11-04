@@ -11,14 +11,26 @@ import {
   Calendar,
   ShoppingBag,
   Store,
-  Mail,
-  Phone,
+  Check,
+  TruckIcon,
+  Ban,
 } from "lucide-react";
 import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
 import { motion, AnimatePresence } from "framer-motion";
+import useCommandeStore from "../../../stores/commande.store";
+import { useState } from "react";
 
 const CommandeDetailModal = ({ commande, onClose }) => {
+  const {
+    annulerCommande,
+    livrerCommande,
+    confirmerCommande,
+    changerStatutSousCommande
+  } = useCommandeStore();
+
+  const [loadingAction, setLoadingAction] = useState(null);
+
   const getStatusBadge = (status) => {
     const baseClasses = "px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1";
     
@@ -30,6 +42,7 @@ const CommandeDetailModal = ({ commande, onClose }) => {
           </span>
         );
       case "Validée":
+      case "Confirmée":
         return (
           <span className={`bg-emerald-100 text-emerald-800 ${baseClasses}`}>
             <CheckCircle className="w-3 h-3" /> {status}
@@ -61,6 +74,47 @@ const CommandeDetailModal = ({ commande, onClose }) => {
     return format(date, "dd MMM yyyy HH:mm", { locale: fr });
   };
 
+  // Fonction de callback pour fermer la modal après succès
+  const handleSuccess = () => {
+    setTimeout(() => {
+      onClose();
+    }, 500); // Petit délai pour voir le toast
+  };
+
+  // Gestion des actions de commande
+  const handleAction = async (action, hashid) => {
+    setLoadingAction(action);
+    try {
+      switch (action) {
+        case 'annuler':
+          await annulerCommande(hashid, handleSuccess);
+          break;
+        case 'livrer':
+          await livrerCommande(hashid, handleSuccess);
+          break;
+        case 'confirmer':
+          await confirmerCommande(hashid, handleSuccess);
+          break;
+      }
+    } catch (error) {
+      // L'erreur est gérée dans le store avec toast
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  // Gestion du changement de statut des sous-commandes
+  const handleChangerStatutSousCommande = async (hashidCommande, hashidArticle, statut, libVariation = null) => {
+    setLoadingAction(`sous-commande-${hashidArticle}`);
+    try {
+      await changerStatutSousCommande(hashidCommande, hashidArticle, statut, libVariation, handleSuccess);
+    } catch (error) {
+      // L'erreur est gérée dans le store avec toast
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
   const modalVariants = {
     hidden: { 
       opacity: 0, 
@@ -86,6 +140,42 @@ const CommandeDetailModal = ({ commande, onClose }) => {
     e.stopPropagation();
   };
 
+  // Vérifier si une action est désactivée
+  const isActionDisabled = (actionType, article = null) => {
+    if (loadingAction) return true;
+    
+    if (article) {
+      // Pour les sous-commandes
+      switch (actionType) {
+        case 'confirmer':
+          return article.statut_sous_commande === 'Confirmée' || 
+                 article.statut_sous_commande === 'Livrée' ||
+                 commande.statut === 'Annulée';
+        case 'livrer':
+          return article.statut_sous_commande === 'Livrée' || 
+                 commande.statut === 'Annulée';
+        default:
+          return false;
+      }
+    } else {
+      // Pour les commandes principales
+      switch (actionType) {
+        case 'confirmer':
+          return commande.statut === 'Confirmée' || 
+                 commande.statut === 'Livrée' || 
+                 commande.statut === 'Annulée';
+        case 'livrer':
+          return commande.statut === 'Livrée' || 
+                 commande.statut === 'Annulée' ||
+                 commande.statut !== 'Confirmée';
+        case 'annuler':
+          return commande.statut === 'Annulée';
+        default:
+          return false;
+      }
+    }
+  };
+
   if (!commande) return null;
 
   return (
@@ -94,6 +184,7 @@ const CommandeDetailModal = ({ commande, onClose }) => {
         className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
         initial="hidden"
         animate="visible"
+        exit="hidden"
       >
         {/* Backdrop - se ferme au clic */}
         <motion.div 
@@ -107,7 +198,7 @@ const CommandeDetailModal = ({ commande, onClose }) => {
         <motion.div 
           className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-emerald-100/20 relative z-50"
           variants={modalVariants}
-          onClick={handleModalClick} // Empêche la propagation vers le backdrop
+          onClick={handleModalClick}
         >
           <div className="p-4 sm:p-6 lg:p-8">
             {/* En-tête */}
@@ -224,9 +315,15 @@ const CommandeDetailModal = ({ commande, onClose }) => {
                         {/* Contenu */}
                         <div className="flex-1 min-w-0">
                           {/* Titre et description */}
-                          <h4 className="font-semibold text-emerald-900 text-base sm:text-lg mb-1 sm:mb-2 text-center sm:text-left">
-                            {article.nom_article}
-                          </h4>
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                            <h4 className="font-semibold text-emerald-900 text-base sm:text-lg text-center sm:text-left">
+                              {article.nom_article}
+                            </h4>
+                            <div className="flex justify-center sm:justify-start">
+                              {getStatusBadge(article.statut_sous_commande || 'En attente')}
+                            </div>
+                          </div>
+                          
                           <p className="text-emerald-600/80 text-xs sm:text-sm line-clamp-2 mb-2 sm:mb-3 text-center sm:text-left">
                             {article.description}
                           </p>
@@ -263,30 +360,65 @@ const CommandeDetailModal = ({ commande, onClose }) => {
                             </div>
                           )}
 
+                          {/* Boutons d'action pour les sous-commandes */}
+                          <div className="mt-3 flex flex-wrap gap-2 justify-center sm:justify-start">
+                            {/* Bouton Confirmer */}
+                            <motion.button
+                              onClick={() => handleChangerStatutSousCommande(
+                                commande.hashid, 
+                                article.hashid, 
+                                'Confirmée',
+                                article.variations?.[0]?.lib_variation
+                              )}
+                              disabled={isActionDisabled('confirmer', article) || loadingAction === `sous-commande-${article.hashid}`}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
+                                isActionDisabled('confirmer', article) 
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                              }`}
+                              whileHover={!isActionDisabled('confirmer', article) ? { scale: 1.05 } : {}}
+                              whileTap={!isActionDisabled('confirmer', article) ? { scale: 0.95 } : {}}
+                            >
+                              {loadingAction === `sous-commande-${article.hashid}` ? (
+                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Check className="w-4 h-4" />
+                              )}
+                              {article.statut_sous_commande === 'Confirmée' ? 'Confirmée' : 'Confirmer'}
+                            </motion.button>
+                            
+                            {/* Bouton Livrer */}
+                            <motion.button
+                              onClick={() => handleChangerStatutSousCommande(
+                                commande.hashid, 
+                                article.hashid, 
+                                'Livrée',
+                                article.variations?.[0]?.lib_variation
+                              )}
+                              disabled={isActionDisabled('livrer', article) || loadingAction === `sous-commande-${article.hashid}`}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
+                                isActionDisabled('livrer', article) 
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                              }`}
+                              whileHover={!isActionDisabled('livrer', article) ? { scale: 1.05 } : {}}
+                              whileTap={!isActionDisabled('livrer', article) ? { scale: 0.95 } : {}}
+                            >
+                              {loadingAction === `sous-commande-${article.hashid}` ? (
+                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <TruckIcon className="w-4 h-4" />
+                              )}
+                              {article.statut_sous_commande === 'Livrée' ? 'Livrée' : 'Livrer'}
+                            </motion.button>
+                          </div>
+
                           {/* Boutique */}
-                          <div className="bg-white rounded-lg p-2 sm:p-3 border border-emerald-200">
-                            <h3 className="font-semibold text-emerald-900 mb-4 flex items-center gap-3 text-md">
-                              <div className="p-2 bg-emerald-100 rounded-lg">
-                                <Store className="w-5 h-5 text-emerald-600" />
-                              </div>
-                              Informations boutique
+                          <div className="bg-white rounded-lg p-2 sm:p-3 border border-emerald-200 mt-3">
+                            <h3 className="font-semibold text-emerald-900 mb-2 flex items-center gap-2 text-sm">
+                              <Store className="w-4 h-4 text-emerald-600" />
+                              Boutique: {article.boutique.nom_btq}
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              <div className="space-y-3">
-                                <div>
-                                  <p className="text-emerald-600/70 text-xs font-medium mb-1">Nom complet</p>
-                                  <p className="text-emerald-900 font-medium">{commande.boutique.nom_btq}</p>
-                                </div>
-                                <div>
-                                  <p className="text-emerald-600/70 text-xs font-medium mb-1">Email</p>
-                                  <p className="text-emerald-900 font-medium">{commande.boutique.email_btq}</p>
-                                </div>
-                              </div>
-                              <div className="space-y-3">
-                                <p className="text-emerald-600/70 text-xs font-medium mb-1">Téléphone</p>
-                                <p className="text-emerald-900 font-medium">{commande.boutique.tel_btq}</p>
-                              </div>
-                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -296,6 +428,77 @@ const CommandeDetailModal = ({ commande, onClose }) => {
               </div>
 
               <div className="space-y-6">
+                {/* Actions de commande */}
+                <motion.div 
+                  className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-emerald-100/60 hover:shadow-xl transition-all duration-300"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <h3 className="font-semibold text-emerald-900 mb-4 text-lg">Actions</h3>
+                  <div className="space-y-3">
+                    {/* Bouton Confirmer */}
+                    <motion.button
+                      onClick={() => handleAction('confirmer', commande.hashid)}
+                      disabled={isActionDisabled('confirmer') || loadingAction === 'confirmer'}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+                        isActionDisabled('confirmer') 
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                          : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      }`}
+                      whileHover={!isActionDisabled('confirmer') ? { scale: 1.02 } : {}}
+                      whileTap={!isActionDisabled('confirmer') ? { scale: 0.98 } : {}}
+                    >
+                      {loadingAction === 'confirmer' ? (
+                        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-5 h-5" />
+                      )}
+                      {commande.statut === 'Confirmée' ? 'Confirmée' : 'Confirmer la commande'}
+                    </motion.button>
+                    
+                    {/* Bouton Livrer */}
+                    <motion.button
+                      onClick={() => handleAction('livrer', commande.hashid)}
+                      disabled={isActionDisabled('livrer') || loadingAction === 'livrer'}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+                        isActionDisabled('livrer') 
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                      whileHover={!isActionDisabled('livrer') ? { scale: 1.02 } : {}}
+                      whileTap={!isActionDisabled('livrer') ? { scale: 0.98 } : {}}
+                    >
+                      {loadingAction === 'livrer' ? (
+                        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Truck className="w-5 h-5" />
+                      )}
+                      {commande.statut === 'Livrée' ? 'Livrée' : 'Marquer comme livrée'}
+                    </motion.button>
+                    
+                    {/* Bouton Annuler */}
+                    <motion.button
+                      onClick={() => handleAction('annuler', commande.hashid)}
+                      disabled={isActionDisabled('annuler') || loadingAction === 'annuler'}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+                        isActionDisabled('annuler') 
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                          : 'bg-red-600 text-white hover:bg-red-700'
+                      }`}
+                      whileHover={!isActionDisabled('annuler') ? { scale: 1.02 } : {}}
+                      whileTap={!isActionDisabled('annuler') ? { scale: 0.98 } : {}}
+                    >
+                      {loadingAction === 'annuler' ? (
+                        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Ban className="w-5 h-5" />
+                      )}
+                      {commande.statut === 'Annulée' ? 'Annulée' : 'Annuler la commande'}
+                    </motion.button>
+                  </div>
+                </motion.div>
+
                 {/* Résumé */}
                 <motion.div 
                   className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-emerald-100/60 hover:shadow-xl transition-all duration-300"
