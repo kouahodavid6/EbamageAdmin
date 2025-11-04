@@ -8,14 +8,15 @@ const RecentClients = ({
     formatDate,
     buttonVariants 
 }) => {
-    const getRecent = (arr) => {
-        const n = arr.length;
-        const start = Math.max(n - 3);
-        return arr.slice(start, n);
+    // Récupère toujours les 3 clients les plus récents
+    const getRecentClients = (arr) => {
+        return arr
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 3); // Prend les 3 premiers après tri par date décroissante
     };
 
-    const recentClients = getRecent(clients);
-    const skeletonCountClt = clients?.length > 0 ? clients.length : 3;
+    const recentClients = getRecentClients(clients);
+    const skeletonCountClt = 3; // Toujours 3 squelettes
 
     return (
         <motion.div 
@@ -65,9 +66,7 @@ const RecentClients = ({
             ) : (
                 <div className="space-y-4">
                     {recentClients?.length > 0 ? (
-                        recentClients
-                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                        .map((client, index) => {
+                        recentClients.map((client, index) => {
                             const nom = client?.nom_clt?.toUpperCase() || "Client";
                             const initiale = nom.charAt(0);
 
