@@ -401,14 +401,6 @@ const Clients = () => {
                       >
                         Supprimer
                       </motion.button>
-                      <motion.button
-                        className="flex-1 py-2 bg-gradient-to-r from-emerald-500 to-emerald-500 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-600 font-medium text-sm transition-all duration-300 shadow-lg shadow-blue-500/25"
-                        variants={buttonVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        Contacter
-                      </motion.button>
                     </motion.div>
                   </div>
                 </motion.div>
