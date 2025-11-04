@@ -7,13 +7,12 @@ import {
   Users,
   Bell,
   Store,
-  Package,
+  PieChart,
   Activity,
   ArrowRight,
   Calendar,
   Image,
   Upload,
-  CheckCircle,
   X,
   Trash2,
 } from "lucide-react";
@@ -222,9 +221,9 @@ const Dashboard = () => {
         borderColor: "border-purple-200"
       },
       {
-        title: "Voir les commandes",
-        icon: Package,
-        path: '/commandes',
+        title: "Finances",
+        icon: PieChart,
+        path: '/finances',
         color: "bg-green-100",
         textColor: "text-green-600",
         borderColor: "border-green-200"
