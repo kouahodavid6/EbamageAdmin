@@ -349,9 +349,6 @@ const Notifications = () => {
                                                 </option>
                                             ))}
                                         </select>
-                                        <p className="text-xs text-emerald-600 mt-1">
-                                            {clientsWithToken.length} client(s) avec device token disponible
-                                        </p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-emerald-700 mb-2">
@@ -444,9 +441,6 @@ const Notifications = () => {
                                                 </option>
                                             ))}
                                         </select>
-                                        <p className="text-xs text-emerald-600 mt-1">
-                                            {boutiquesWithToken.length} boutique(s) avec device token disponible
-                                        </p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-emerald-700 mb-2">
