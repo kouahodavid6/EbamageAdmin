@@ -3,14 +3,15 @@ import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
 import RecentBoutiques from "./components/RecentBoutiques";
 import RecentClients from "./components/RecentClients";
+import ModifierPrixModal from "./components/ModifierPrixModal";
 import {
-  Users,
+  Calendar,
   Bell,
-  Store,
-  PieChart,
+  BadgeCent,
+  Settings,
+  Wallet,
   Activity,
   ArrowRight,
-  Calendar,
   Image,
   Upload,
   X,
@@ -21,6 +22,7 @@ import useBoutiqueStore from "../../stores/boutique.store";
 import useClientStore from "../../stores/client.store";
 import useCategorieStore from "../../stores/categorie.store";
 import usePubliciteStore from "../../stores/publicites.store";
+import useLivraisonStore from "../../stores/livraison.store";
 import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
 import { motion } from "framer-motion";
@@ -33,12 +35,19 @@ const Dashboard = () => {
     stats: true,
     activities: true,
     boutiques: true,
-    clients: true
+    clients: true,
+    livraison: true
   });
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  
+  const [modalOpen, setModalOpen] = useState({
+    prix: false,
+    seuil: false
+  });
 
+  // Stores
   const { commandes = [], fetchCommandes } = useCommandeStore();
   const { boutiques = [], fetchBoutiques } = useBoutiqueStore();
   const { clients = [], fetchClients } = useClientStore();
@@ -46,53 +55,110 @@ const Dashboard = () => {
   const { 
     sendToClients, 
     loading: publiciteLoading, 
-    error, 
-    success, 
+    error: publiciteError, 
+    success: publiciteSuccess, 
     clearState 
   } = usePubliciteStore();
 
+  const { 
+    prixLivraison, 
+    seuilLivraisonGratuite, 
+    fetchPrixLivraison, 
+    fetchSeuilLivraison, 
+    updatePrixLivraison, 
+    updateSeuilLivraison,
+    loading: livraisonLoading,
+    error: livraisonError 
+  } = useLivraisonStore();
+
+  // Chargement des données
   useEffect(() => {
     const loadData = async () => {
       try {
+        setLoading({
+          stats: true,
+          activities: true,
+          boutiques: true,
+          clients: true,
+          livraison: true
+        });
+
         await Promise.all([
           fetchCommandes(),
           fetchBoutiques(),
           fetchClients(),
           fetchCategories(),
+          fetchPrixLivraison(),
+          fetchSeuilLivraison(),
         ]);
+
         setLoading({
           stats: false,
           activities: false,
           boutiques: false,
-          clients: false
+          clients: false,
+          livraison: false
         });
       } catch (error) {
         console.error("Erreur chargement données:", error);
+        toast.error("Erreur lors du chargement des données");
         setLoading({
           stats: false,
           activities: false,
           boutiques: false,
-          clients: false
+          clients: false,
+          livraison: false
         });
       }
     };
 
     loadData();
-  }, [fetchCommandes, fetchBoutiques, fetchClients, fetchCategories]);
+  }, [fetchCommandes, fetchBoutiques, fetchClients, fetchCategories, fetchPrixLivraison, fetchSeuilLivraison]);
 
-  // Gérer les succès et erreurs avec les toasts
+  // Gestion des toasts
   useEffect(() => {
-    if (success) {
+    if (publiciteSuccess) {
       toast.success('Publicité envoyée avec succès !');
       clearState();
       clearImage();
     }
-    if (error) {
-      toast.error(error);
+    if (publiciteError) {
+      toast.error(publiciteError);
       clearState();
     }
-  }, [success, error, clearState]);
+    if (livraisonError) {
+      toast.error(livraisonError);
+    }
+  }, [publiciteSuccess, publiciteError, livraisonError, clearState]);
 
+  // Fonctions pour les modales
+  const openModal = (type) => {
+    setModalOpen(prev => ({ ...prev, [type]: true }));
+  };
+
+  const closeModal = (type) => {
+    setModalOpen(prev => ({ ...prev, [type]: false }));
+  };
+
+  const handleModifierPrix = async (nouveauPrix) => {
+    try {
+      await updatePrixLivraison(nouveauPrix);
+      toast.success('Prix de livraison modifié avec succès !');
+    } catch (error) {
+      // L'erreur est déjà gérée par le store
+    }
+  };
+
+  const handleModifierSeuil = async (nouveauSeuil) => {
+    try {
+      await updateSeuilLivraison(nouveauSeuil);
+      toast.success('Seuil de livraison gratuite modifié avec succès !');
+    } catch (error) {
+      // L'erreur est déjà gérée par le store
+    }
+  };
+
+  // Formatage de date
   const formatDate = (dateString) => {
     if (!dateString) return "Date inconnue";
     try {
@@ -103,19 +169,17 @@ const Dashboard = () => {
     }
   };
 
-  // Gérer la sélection d'une seule image
+  // Gestion des images
   const handleImageSelect = (event) => {
     const file = event.target.files[0];
     
     if (!file) return;
 
-    // Vérifier la taille du fichier
     if (file.size > 5 * 1024 * 1024) {
       toast.error("L'image dépasse la taille maximale de 5MB");
       return;
     }
 
-    // Vérifier le type de fichier
     if (!file.type.startsWith('image/')) {
       toast.error("Veuillez sélectionner une image valide");
       return;
@@ -123,7 +187,6 @@ const Dashboard = () => {
 
     setSelectedImage(file);
 
-    // Créer la preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview({
@@ -134,8 +197,6 @@ const Dashboard = () => {
     reader.readAsDataURL(file);
 
     clearState();
-    
-    // Réinitialiser l'input file
     event.target.value = '';
   };
 
@@ -144,7 +205,6 @@ const Dashboard = () => {
     setImagePreview(null);
   };
 
-  // Envoyer la publicité (UNE SEULE IMAGE)
   const handleSendPublicite = async () => {
     if (!selectedImage) {
       toast.error('Veuillez sélectionner une image');
@@ -153,16 +213,10 @@ const Dashboard = () => {
 
     try {
       const formData = new FormData();
-
-      // ✅ UNE SEULE IMAGE avec la clé "images"
       formData.append('images', selectedImage);
-
       await sendToClients(formData);
-
-      // Le reset se fait dans le useEffect du succès
     } catch (error) {
       console.error('Erreur envoi publicité:', error);
-      // L'erreur est déjà gérée par le store et affichée dans le toast
     }
   };
 
@@ -179,9 +233,10 @@ const Dashboard = () => {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
+      y: 0,
       transition: {
         duration: 0.5,
         ease: "easeOut"
@@ -194,6 +249,7 @@ const Dashboard = () => {
     tap: { scale: 0.95, transition: { duration: 0.1 } }
   };
 
+  // Configuration des cartes d'actions
   const actionsPages = () => {
     return [
       {
@@ -202,35 +258,44 @@ const Dashboard = () => {
         path: '/sendNotifications',
         color: "bg-emerald-100",
         textColor: "text-emerald-600",
-        borderColor: "border-emerald-200"
+        borderColor: "border-emerald-200",
+        isLink: true
       },
       {
-        title: "Gérer les boutiques",
-        icon: Store,
-        path: '/boutiques',
-        color: "bg-blue-100",
-        textColor: "text-blue-600",
-        borderColor: "border-blue-200"
+        title: "Prix de livraison",
+        icon: BadgeCent,
+        onClick: () => openModal('prix'),
+        color: "bg-emerald-100",
+        textColor: "text-emerald-600",
+        borderColor: "border-emerald-200",
+        valeur: prixLivraison ? `${prixLivraison.toLocaleString("fr-FR")} FCFA` : "Chargement...",
+        description: "Modifier le prix",
+        isLink: false
       },
       {
-        title: "Gérer les clients",
-        icon: Users,
-        path: '/clients',
-        color: "bg-purple-100",
-        textColor: "text-purple-600",
-        borderColor: "border-purple-200"
+        title: "Seuil livraison gratuite",
+        icon: BadgeCent,
+        onClick: () => openModal('seuil'),
+        color: "bg-emerald-100",
+        textColor: "text-emerald-600",
+        borderColor: "border-emerald-200",
+        valeur: seuilLivraisonGratuite ? `${seuilLivraisonGratuite.toLocaleString("fr-FR")} FCFA` : "Chargement...",
+        description: "Modifier le seuil",
+        isLink: false
       },
       {
         title: "Finances",
-        icon: PieChart,
+        icon: Wallet,
         path: '/finances',
         color: "bg-green-100",
         textColor: "text-green-600",
-        borderColor: "border-green-200"
+        borderColor: "border-green-200",
+        isLink: true
       },
     ];
   };
 
+  // Activités récentes
   const recentActivities = (commandes || []).slice(0, 5).map((cmd) => ({
     id: cmd?.hashid || Math.random().toString(),
     user: cmd?.client?.nom_clt || "Client inconnu",
@@ -239,44 +304,108 @@ const Dashboard = () => {
     amount: `${(cmd?.prix_total_commande || 0).toLocaleString("fr-FR")} FCFA`,
   }));
 
+  // Rendu des cartes d'actions
+  const renderActionCard = (action, index) => {
+    if (action.isLink) {
+      return (
+        <Link key={index} to={action.path}>
+          <motion.div
+            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group h-full"
+            variants={itemVariants}
+            whileHover="hover"
+          >
+            <div className="flex items-center justify-between h-full">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-emerald-600/80 mb-2">
+                  {action.title}
+                </p>
+                <h3 className="text-2xl font-bold text-emerald-900 mt-2">
+                  {action.valeur || ""}
+                </h3>
+                {action.description && (
+                  <p className="text-xs text-emerald-600/60 mt-1">
+                    {action.description}
+                  </p>
+                )}
+              </div>
+              <motion.div 
+                className={`p-3 rounded-xl ${action.color} border ${action.borderColor} group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <action.icon className={`w-6 h-6 ${action.textColor}`} />
+              </motion.div>
+            </div>
+          </motion.div>
+        </Link>
+      );
+    }
+
+    return (
+      <motion.div
+        key={index}
+        className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group h-full"
+        variants={itemVariants}
+        whileHover="hover"
+        onClick={action.onClick}
+      >
+        <div className="flex items-center justify-between h-full">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-emerald-600/80 mb-2">
+              {action.title}
+            </p>
+            <h3 className="text-xl font-bold text-emerald-900 mt-2">
+              {action.valeur || ""}
+            </h3>
+            {action.description && (
+              <p className="text-xs text-emerald-600/60 mt-1">
+                {action.description}
+              </p>
+            )}
+          </div>
+          <motion.div 
+            className={`p-3 rounded-xl ${action.color} border ${action.borderColor} group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <action.icon className={`w-6 h-6 ${action.textColor}`} />
+          </motion.div>
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50/20 flex flex-col md:flex-row">
 
       {/* Overlay mobile */}
       {sidebarOpen && (
-          <div
-              className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
-              onClick={() => setSidebarOpen(false)}
-          />
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* Sidebar */}
       <div
-          className={`fixed md:sticky top-0 z-50 transition-transform duration-300 ease-in-out
-              ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-              md:translate-x-0 w-64 h-screen`}
+        className={`fixed md:sticky top-0 z-50 transition-transform duration-300 ease-in-out
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+            md:translate-x-0 w-64 h-screen`}
       >
-        {/* Croix mobile */}
         <div className="md:hidden flex justify-end p-4 absolute top-0 right-0 z-50">
-            <button
-                onClick={() => setSidebarOpen(false)}
-                className="text-emerald-600 hover:text-emerald-800 transition-all duration-300 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-lg"
-                aria-label="Fermer la sidebar"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="text-emerald-600 hover:text-emerald-800 transition-all duration-300 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-lg"
+            aria-label="Fermer la sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-
         <DashboardSidebar/>
       </div>
 
       {/* Contenu principal */}
       <div className="flex-1 min-w-0 flex flex-col">
-
         <DashboardHeader
           title="Tableau de bord"
           toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -286,8 +415,8 @@ const Dashboard = () => {
           {/* Section Bienvenue */}
           <motion.div 
             className="bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl p-6 sm:p-8 text-white shadow-2xl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
             <div className="flex items-center justify-between">
@@ -324,7 +453,6 @@ const Dashboard = () => {
             animate="visible"
           >
             {loading.stats ? (
-              // Loading state for stats
               Array(4).fill(0).map((_, index) => (
                 <motion.div
                   key={index}
@@ -344,44 +472,17 @@ const Dashboard = () => {
                 </motion.div>
               ))
             ) : (
-              // Actual actions content - VERSION CLIQUABLE
-              actionsPages().map((action, index) => (
-                <Link key={index} to={action.path}>
-                  <motion.div
-                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group"
-                    variants={itemVariants}
-                    whileHover="hover"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-emerald-600/80 mb-1">
-                          {action.title}
-                        </p>
-                        <h3 className="text-2xl font-bold text-emerald-900 mt-1">
-                          {/* Vous pouvez ajouter des valeurs dynamiques ici si besoin */}
-                        </h3>
-                      </div>
-                      <motion.div 
-                        className={`p-3 rounded-xl ${action.color} border ${action.borderColor} group-hover:scale-110 transition-transform duration-300`}
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <action.icon className={`w-6 h-6 ${action.textColor}`} />
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                </Link>
-              ))
+              actionsPages().map((action, index) => renderActionCard(action, index))
             )}
           </motion.div>
 
           {/* Publicités et Activités */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Section Publicités - VERSION UNE SEULE IMAGE */}
+            {/* Section Publicités */}
             <motion.div 
               className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 lg:col-span-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
               <div className="flex items-center justify-between mb-6">
@@ -402,7 +503,7 @@ const Dashboard = () => {
               </div>
               
               <div className="space-y-6">
-                {/* Zone de dépôt d'image - VERSION UNE SEULE IMAGE */}
+                {/* Zone de dépôt d'image */}
                 <motion.div 
                   className="border-2 border-dashed border-emerald-300 rounded-2xl p-6 text-center bg-emerald-50/50 hover:bg-emerald-50 transition-all duration-300 cursor-pointer"
                   whileHover={{ scale: 1.02 }}
@@ -516,8 +617,8 @@ const Dashboard = () => {
             {/* Activités récentes */}
             <motion.div 
               className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
               <div className="flex items-center justify-between mb-6">
@@ -547,8 +648,8 @@ const Dashboard = () => {
                       <motion.div 
                         key={activity.id} 
                         className="flex items-start p-3 bg-emerald-50/50 rounded-xl border border-emerald-100"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 + (index * 0.1) }}
                       >
                         <div className="bg-emerald-100 p-2 rounded-lg mr-3 mt-1">
@@ -612,6 +713,25 @@ const Dashboard = () => {
           </div>
         </main>
       </div>
+
+      {/* Modales pour la modification des prix */}
+      <ModifierPrixModal
+        isOpen={modalOpen.prix}
+        onClose={() => closeModal('prix')}
+        type="prix"
+        valeurActuelle={prixLivraison}
+        onModifier={handleModifierPrix}
+        loading={livraisonLoading}
+      />
+
+      <ModifierPrixModal
+        isOpen={modalOpen.seuil}
+        onClose={() => closeModal('seuil')}
+        type="seuil"
+        valeurActuelle={seuilLivraisonGratuite}
+        onModifier={handleModifierSeuil}
+        loading={livraisonLoading}
+      />
     </div>
   );
 };
