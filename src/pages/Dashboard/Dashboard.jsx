@@ -284,9 +284,9 @@ const Dashboard = () => {
         isLink: false
       },
       {
-        title: "Finances",
+        title: "Gèrer les Portefeuilles",
         icon: Wallet,
-        path: '/finances',
+        path: '/portefeuilles',
         color: "bg-green-100",
         textColor: "text-green-600",
         borderColor: "border-green-200",

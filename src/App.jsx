@@ -13,7 +13,7 @@ import Clients from './pages/Clients/Clients';
 import Commandes from './pages/Commandes/Commandes';
 import Localisations from './pages/Localisations/Localisations';
 import Profil from './pages/Profil/Profil';
-import Finances from './pages/Finances/Finances';
+import Portefeuilles from './pages/Portefeuilles/Portefeuilles';
 import useAuthStore from './stores/auth.store';
 
 import NotFound from './components/NotFound';
@@ -164,10 +164,10 @@ function App() {
             />
 
             <Route 
-              path="/finances" 
+              path="/portefeuilles" 
               element={
                 <ProtectedRoute>
-                  <Finances />
+                  <Portefeuilles />
                 </ProtectedRoute>
               } 
             />

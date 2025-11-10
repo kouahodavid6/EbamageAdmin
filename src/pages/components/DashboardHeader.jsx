@@ -28,14 +28,14 @@ const DashboardHeader = ({ title, toggleSidebar }) => {
             {/* Zone à droite : notifications + profil */}
             <div className="ml-auto flex items-center space-x-4">
                 {/* Bouton cloche de notifications */}
-                <motion.button 
+                {/* <motion.button 
                     className="p-2 rounded-full text-emerald-600 hover:bg-emerald-100/80 transition-all duration-300 relative border border-transparent hover:border-emerald-200"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                 >
                     <Bell className="h-6 w-6" />
                     <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-gradient-to-r from-emerald-400 to-emerald-400 rounded-full border border-white"/>
-                </motion.button>
+                </motion.button> */}
 
                 {/* Avatar + infos utilisateur */}
                 <Link
