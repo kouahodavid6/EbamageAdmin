@@ -1,34 +1,34 @@
 import axiosInstance from "../api/axiosInstance";
 
-const getSoldeAdmin = async () => {
+const getSoldes = async () => {
     try {
-        const response = await axiosInstance.get('/api/solde/admin');
-        return response.data;
+        const response = await axiosInstance.get('/api/soldes');
+        return response;
     } catch (error) {
-        throw new Error(error.response?.data?.message || 'Erreur lors de la récupération du solde admin');
+        throw new Error(error.response?.data?.message || 'Erreur lors de la récupération des soldes');
     }
 }
 
-const getPortefeuilles = async () => {
+const getReclamations = async () => {
     try {
         const response = await axiosInstance.get('/api/afficher/portefeuille');
-        return response.data;
+        return response;
     } catch (error) {
-        throw new Error(error.response?.data?.message || 'Erreur lors de la récupération des portefeuilles');
+        throw new Error(error.response?.data?.message || 'Erreur lors de la récupération des réclamations');
     }
 }
 
-const marquerPaye = async () => {
+const marquerPaye = async (hashid) => {
     try {
-        const response = await axiosInstance.post('/api/marquer/paye/:hashid');
-        return response.data;
+        const response = await axiosInstance.post(`/api/marquer/paye/${hashid}`);
+        return response;
     } catch (error) {
         throw new Error(error.response?.data?.message || 'Erreur lors du marquage comme payé')
     }
 }
 
 export const portefeuillesService = {
-    getSoldeAdmin,
-    getPortefeuilles,
+    getSoldes,
+    getReclamations,
     marquerPaye
 }

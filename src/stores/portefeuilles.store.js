@@ -1,28 +1,33 @@
-// stores/portefeuilleStore.js
 import { create } from 'zustand';
 import { portefeuillesService } from '../services/portefeuilles.service';
 
 export const usePortefeuilleStore = create((set, get) => ({
   // États
-  soldeAdmin: null,
-  portefeuilles: {
-    boutiques: [],
-    livreurs: []
+  soldes: {
+    solde_admin: 0,
+    solde_boutique: 0,
+    solde_livreur: 0
   },
+  reclamations: [],
   loading: false,
   error: null,
   success: null,
 
   // Actions
-  // Récupérer le solde admin
-  async fetchSoldeAdmin() {
+  // Récupérer les soldes
+  async fetchSoldes() {
     set({ loading: true, error: null });
     try {
-      const response = await portefeuillesService.getSoldeAdmin();
+      const response = await portefeuillesService.getSoldes();
+      
       set({ 
-        soldeAdmin: response.data,
+        soldes: response.data?.data || response.data || {
+          solde_admin: 0,
+          solde_boutique: 0,
+          solde_livreur: 0
+        },
         loading: false,
-        success: 'Solde admin récupéré avec succès'
+        success: 'Soldes récupérés avec succès'
       });
       return response;
     } catch (error) {
@@ -34,15 +39,19 @@ export const usePortefeuilleStore = create((set, get) => ({
     }
   },
 
-  // Récupérer les portefeuilles
-  async fetchPortefeuilles() {
+  // Récupérer les réclamations
+  async fetchReclamations() {
     set({ loading: true, error: null });
     try {
-      const response = await portefeuillesService.getPortefeuilles();
+      const response = await portefeuillesService.getReclamations();
+      
+      // Accéder aux données selon la structure exacte de votre API
+      const reclamationsData = response.data?.data || [];
+      
       set({ 
-        portefeuilles: response.data,
+        reclamations: Array.isArray(reclamationsData) ? reclamationsData : [],
         loading: false,
-        success: 'Portefeuilles récupérés avec succès'
+        success: 'Réclamations récupérées avec succès'
       });
       return response;
     } catch (error) {
@@ -55,29 +64,27 @@ export const usePortefeuilleStore = create((set, get) => ({
   },
 
   // Marquer comme payé
-  async marquerCommePaye(hashid, type) {
+  async marquerCommePaye(hashid) {
     set({ loading: true, error: null });
     try {
       const response = await portefeuillesService.marquerPaye(hashid);
       
-      // Mettre à jour l'état local
-      const { portefeuilles } = get();
-      const updatedPortefeuilles = { ...portefeuilles };
-      
-      if (type === 'boutique') {
-        updatedPortefeuilles.boutiques = portefeuilles.boutiques.map(boutique =>
-          boutique.hashid === hashid ? { ...boutique, statut_paiement: 'payé' } : boutique
-        );
-      } else if (type === 'livreur') {
-        updatedPortefeuilles.livreurs = portefeuilles.livreurs.map(livreur =>
-          livreur.hashid === hashid ? { ...livreur, statut_paiement: 'payé' } : livreur
-        );
-      }
+      // Mettre à jour l'état local avec les données de l'API
+      const { reclamations } = get();
+      const updatedReclamations = reclamations.map(reclamation =>
+        reclamation.hashid === hashid 
+          ? { 
+              ...reclamation, 
+              is_paid: true,
+              statut: "Payé"
+            } 
+          : reclamation
+      );
       
       set({ 
-        portefeuilles: updatedPortefeuilles,
+        reclamations: updatedReclamations,
         loading: false,
-        success: 'Portefeuille marqué comme payé avec succès'
+        success: response.data?.message || 'Réclamation marquée comme payée avec succès'
       });
       
       return response;
@@ -90,67 +97,53 @@ export const usePortefeuilleStore = create((set, get) => ({
     }
   },
 
-  // Calculer les totaux
+  // Calculer les totaux BASÉS SUR LES VRAIES DONNÉES DE L'API
   getTotals() {
-    const { portefeuilles } = get();
+    const { reclamations } = get();
     
-    const totalBoutiques = portefeuilles.boutiques.reduce((sum, boutique) => 
-      sum + (parseFloat(boutique.solde_a_payer) || 0), 0
-    );
+    // Filtrer seulement les réclamations en attente (is_paid = false)
+    const reclamationsEnAttente = reclamations.filter(r => r.is_paid === false);
     
-    const totalLivreurs = portefeuilles.livreurs.reduce((sum, livreur) => 
-      sum + (parseFloat(livreur.solde_a_payer) || 0), 0
-    );
+    const totalBoutiques = reclamationsEnAttente
+      .reduce((sum, reclamation) => sum + (parseFloat(reclamation.montant) || 0), 0);
     
-    const totalAPayer = totalBoutiques + totalLivreurs;
-    const totalPaye = portefeuilles.boutiques
-      .concat(portefeuilles.livreurs)
-      .reduce((sum, item) => 
-        item.statut_paiement === 'payé' ? sum + (parseFloat(item.solde_a_payer) || 0) : sum, 0
-      );
-
     return {
       totalBoutiques,
-      totalLivreurs,
-      totalAPayer,
-      totalPaye
+      totalReclamations: reclamationsEnAttente.length
     };
   },
 
-  // Filtrer les portefeuilles
-  getFilteredPortefeuilles(searchTerm = '', type = 'tous') {
-    const { portefeuilles } = get();
+  // Filtrer les réclamations avec recherche par nom de boutique
+  getFilteredReclamations(searchTerm = '', statut = 'statut_tous') {
+    const { reclamations } = get();
     
-    let filteredBoutiques = portefeuilles.boutiques;
-    let filteredLivreurs = portefeuilles.livreurs;
+    let filtered = [...reclamations];
 
-    // Filtre par type
-    if (type !== 'tous') {
-      if (type === 'boutiques') {
-        filteredLivreurs = [];
-      } else if (type === 'livreurs') {
-        filteredBoutiques = [];
-      }
-    }
-
-    // Filtre par recherche
+    // Filtre par recherche (nom_boutique ou code_commande)
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filteredBoutiques = filteredBoutiques.filter(boutique =>
-        boutique.nom?.toLowerCase().includes(term) ||
-        boutique.email?.toLowerCase().includes(term)
-      );
-      filteredLivreurs = filteredLivreurs.filter(livreur =>
-        livreur.nom?.toLowerCase().includes(term) ||
-        livreur.prenom?.toLowerCase().includes(term) ||
-        livreur.email?.toLowerCase().includes(term)
+      filtered = filtered.filter(reclamation =>
+        reclamation.nom_boutique?.toLowerCase().includes(term) ||
+        reclamation.code_commande?.toLowerCase().includes(term)
       );
     }
 
-    return {
-      boutiques: filteredBoutiques,
-      livreurs: filteredLivreurs
-    };
+    // Filtre par statut (is_paid)
+    if (statut !== 'statut_tous') {
+      filtered = filtered.filter(reclamation =>
+        statut === 'payé' 
+          ? reclamation.is_paid === true 
+          : reclamation.is_paid === false
+      );
+    }
+
+    return filtered;
+  },
+
+  // Récupérer seulement les réclamations en attente
+  getReclamationsEnAttente() {
+    const { reclamations } = get();
+    return reclamations.filter(r => r.is_paid === false);
   },
 
   // Clear messages

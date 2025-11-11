@@ -461,9 +461,9 @@ const Dashboard = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="h-4 bg-emerald-200 rounded mb-2 w-3/4"></div>
-                      <div className="h-8 bg-emerald-300 rounded mb-1 w-1/2"></div>
-                      <div className="h-3 bg-emerald-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-emerald-200 rounded mb-2 w-3/4 animate-pulse"></div>
+                      <div className="h-8 bg-emerald-300 rounded mb-1 w-1/2 animate-pulse"></div>
+                      <div className="h-3 bg-emerald-200 rounded w-1/4 animate-pulse"></div>
                     </div>
                     <div className="p-3 rounded-xl bg-emerald-200 border border-emerald-300">
                       <div className="w-6 h-6"></div>
