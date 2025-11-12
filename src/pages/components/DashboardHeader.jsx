@@ -1,8 +1,19 @@
 import { Menu, Bell, User } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import useNotificationStore from '../../stores/notifications.store';
 
 const DashboardHeader = ({ title, toggleSidebar }) => {
+    const navigate = useNavigate();
+    const { unreadCount, markAllAsRead } = useNotificationStore();
+
+    const handleNotificationsClick = () => {
+        // Marquer toutes les notifications comme lues lorsqu'on clique
+        if (unreadCount > 0) {
+            markAllAsRead();
+        }
+        navigate('/activites');
+    };
 
     return (
         <header 
@@ -27,20 +38,22 @@ const DashboardHeader = ({ title, toggleSidebar }) => {
 
             {/* Zone à droite : notifications + profil */}
             <div className="ml-auto flex items-center space-x-4">
-                {/* Bouton cloche de notifications */}
-                {/* <motion.button 
+                {/* Bouton cloche de notifications - MAINTENANT CLICKABLE */}
+                <motion.button 
+                    onClick={handleNotificationsClick}
                     className="p-2 rounded-full text-emerald-600 hover:bg-emerald-100/80 transition-all duration-300 relative border border-transparent hover:border-emerald-200"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                 >
                     <Bell className="h-6 w-6" />
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-gradient-to-r from-emerald-400 to-emerald-400 rounded-full border border-white"/>
-                </motion.button> */}
+                    {/* Afficher le point rouge seulement s'il y a des notifications non lues */}
+                    {unreadCount > 0 && (
+                        <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-gradient-to-r from-red-400 to-red-500 rounded-full border border-white"/>
+                    )}
+                </motion.button>
 
                 {/* Avatar + infos utilisateur */}
-                <Link
-                    to="/profil"
-                >
+                <Link to="/profil">
                     <motion.div 
                         whileHover={{ x: 2 }}
                         transition={{ type: "spring", stiffness: 400, damping: 10 }}

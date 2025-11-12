@@ -8,10 +8,7 @@ import {
   Calendar,
   Bell,
   BadgeCent,
-  Settings,
   Wallet,
-  Activity,
-  ArrowRight,
   Image,
   Upload,
   X,
@@ -23,17 +20,17 @@ import useClientStore from "../../stores/client.store";
 import useCategorieStore from "../../stores/categorie.store";
 import usePubliciteStore from "../../stores/publicites.store";
 import useLivraisonStore from "../../stores/livraison.store";
-import { format } from "date-fns";
-import fr from "date-fns/locale/fr";
+import useNotificationStore from "../../stores/notifications.store";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { format } from "date-fns";
+import fr from "date-fns/locale/fr";
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState({
     stats: true,
-    activities: true,
     boutiques: true,
     clients: true,
     livraison: true
@@ -71,13 +68,26 @@ const Dashboard = () => {
     error: livraisonError 
   } = useLivraisonStore();
 
+  // Store des notifications
+  const { updateUnreadCount } = useNotificationStore();
+
+  // Formatage de date - AJOUTÉ
+  const formatDate = (dateString) => {
+    if (!dateString) return "Date inconnue";
+    try {
+      const date = new Date(dateString);
+      return format(date, "dd/MM/yyyy HH:mm", { locale: fr });
+    } catch {
+      return "Date invalide";
+    }
+  };
+
   // Chargement des données
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading({
           stats: true,
-          activities: true,
           boutiques: true,
           clients: true,
           livraison: true
@@ -94,7 +104,6 @@ const Dashboard = () => {
 
         setLoading({
           stats: false,
-          activities: false,
           boutiques: false,
           clients: false,
           livraison: false
@@ -104,7 +113,6 @@ const Dashboard = () => {
         toast.error("Erreur lors du chargement des données");
         setLoading({
           stats: false,
-          activities: false,
           boutiques: false,
           clients: false,
           livraison: false
@@ -114,6 +122,13 @@ const Dashboard = () => {
 
     loadData();
   }, [fetchCommandes, fetchBoutiques, fetchClients, fetchCategories, fetchPrixLivraison, fetchSeuilLivraison]);
+
+  // Mettre à jour le compteur de notifications
+  useEffect(() => {
+    if (commandes.length > 0) {
+      updateUnreadCount(commandes);
+    }
+  }, [commandes, updateUnreadCount]);
 
   // Gestion des toasts
   useEffect(() => {
@@ -155,17 +170,6 @@ const Dashboard = () => {
       toast.success('Seuil de livraison gratuite modifié avec succès !');
     } catch (error) {
       // L'erreur est déjà gérée par le store
-    }
-  };
-
-  // Formatage de date
-  const formatDate = (dateString) => {
-    if (!dateString) return "Date inconnue";
-    try {
-      const date = new Date(dateString);
-      return format(date, "dd/MM/yyyy HH:mm", { locale: fr });
-    } catch {
-      return "Date invalide";
     }
   };
 
@@ -294,15 +298,6 @@ const Dashboard = () => {
       },
     ];
   };
-
-  // Activités récentes
-  const recentActivities = (commandes || []).slice(0, 5).map((cmd) => ({
-    id: cmd?.hashid || Math.random().toString(),
-    user: cmd?.client?.nom_clt || "Client inconnu",
-    action: "a passé une commande",
-    time: formatDate(cmd?.created_at),
-    amount: `${(cmd?.prix_total_commande || 0).toLocaleString("fr-FR")} FCFA`,
-  }));
 
   // Rendu des cartes d'actions
   const renderActionCard = (action, index) => {
@@ -476,239 +471,156 @@ const Dashboard = () => {
             )}
           </motion.div>
 
-          {/* Publicités et Activités */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Section Publicités */}
-            <motion.div 
-              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 lg:col-span-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-emerald-900">
-                  Publicité pour les Clients
-                </h2>
-                {selectedImage && (
-                  <motion.button
-                    onClick={clearImage}
-                    className="text-red-500 hover:text-red-700 font-medium text-sm flex items-center gap-2 transition-all duration-300"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Supprimer
-                  </motion.button>
-                )}
-              </div>
-              
-              <div className="space-y-6">
-                {/* Zone de dépôt d'image */}
-                <motion.div 
-                  className="border-2 border-dashed border-emerald-300 rounded-2xl p-6 text-center bg-emerald-50/50 hover:bg-emerald-50 transition-all duration-300 cursor-pointer"
-                  whileHover={{ scale: 1.02 }}
-                  onClick={() => document.getElementById('image-upload').click()}
+          {/* Section Publicités */}
+          <motion.div 
+            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-emerald-900">
+                Publicité pour les Clients
+              </h2>
+              {selectedImage && (
+                <motion.button
+                  onClick={clearImage}
+                  className="text-red-500 hover:text-red-700 font-medium text-sm flex items-center gap-2 transition-all duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <input
-                    id="image-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-                  
-                  {imagePreview ? (
-                    <div className="space-y-4">
-                      <div className="relative bg-white rounded-xl border border-emerald-200 overflow-hidden max-w-md mx-auto">
-                        <img 
-                          src={imagePreview.url} 
-                          alt="Preview"
-                          className="w-full h-48 object-contain"
-                        />
-                        <div className="p-4">
-                          <p className="text-sm text-emerald-600 font-medium truncate">
-                            {imagePreview.name}
-                          </p>
-                          <p className="text-xs text-emerald-500 mt-1">
-                            {(selectedImage.size / (1024 * 1024)).toFixed(2)} MB
-                          </p>
-                        </div>
-                        <motion.button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            clearImage();
-                          }}
-                          className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300"
-                          whileHover={{ scale: 1.1 }}
-                        >
-                          <X className="w-3 h-3" />
-                        </motion.button>
+                  <Trash2 className="w-4 h-4" />
+                  Supprimer
+                </motion.button>
+              )}
+            </div>
+            
+            <div className="space-y-6">
+              {/* Zone de dépôt d'image */}
+              <motion.div 
+                className="border-2 border-dashed border-emerald-300 rounded-2xl p-6 text-center bg-emerald-50/50 hover:bg-emerald-50 transition-all duration-300 cursor-pointer"
+                whileHover={{ scale: 1.02 }}
+                onClick={() => document.getElementById('image-upload').click()}
+              >
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+                
+                {imagePreview ? (
+                  <div className="space-y-4">
+                    <div className="relative bg-white rounded-xl border border-emerald-200 overflow-hidden max-w-md mx-auto">
+                      <img 
+                        src={imagePreview.url} 
+                        alt="Preview"
+                        className="w-full h-48 object-contain"
+                      />
+                      <div className="p-4">
+                        <p className="text-sm text-emerald-600 font-medium truncate">
+                          {imagePreview.name}
+                        </p>
+                        <p className="text-xs text-emerald-500 mt-1">
+                          {(selectedImage.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
                       </div>
-                      <div className="flex items-center justify-center">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            document.getElementById('image-upload').click();
-                          }}
-                          className="text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center gap-2"
-                        >
-                          <Upload className="w-4 h-4" />
-                          Changer l'image
-                        </button>
-                      </div>
+                      <motion.button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearImage();
+                        }}
+                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300"
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        <X className="w-3 h-3" />
+                      </motion.button>
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                        <Upload className="w-8 h-8 text-emerald-500" />
-                      </div>
-                      <div>
-                        <p className="text-emerald-700 font-semibold">
-                          Cliquez pour sélectionner une image
-                        </p>
-                        <p className="text-emerald-600/70 text-sm mt-1">
-                          Formats supportés: JPG, PNG, GIF • Max 5MB
-                        </p>
-                        <p className="text-emerald-500/60 text-xs mt-1">
-                          (Une seule image à la fois)
-                        </p>
-                      </div>
+                    <div className="flex items-center justify-center">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          document.getElementById('image-upload').click();
+                        }}
+                        className="text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center gap-2"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Changer l'image
+                      </button>
                     </div>
-                  )}
-                </motion.div>
-
-                {/* Informations de l'image */}
-                {selectedImage && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-blue-800 font-medium text-sm">
-                        1 image sélectionnée
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <Upload className="w-8 h-8 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-emerald-700 font-semibold">
+                        Cliquez pour sélectionner une image
                       </p>
-                      <p className="text-blue-600/80 text-xs">
-                        Taille: {(selectedImage.size / (1024 * 1024)).toFixed(2)} MB
+                      <p className="text-emerald-600/70 text-sm mt-1">
+                        Formats supportés: JPG, PNG, GIF • Max 5MB
+                      </p>
+                      <p className="text-emerald-500/60 text-xs mt-1">
+                        (Une seule image à la fois)
                       </p>
                     </div>
                   </div>
                 )}
+              </motion.div>
 
-                {/* Bouton d'envoi */}
-                <motion.button 
-                  className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg transition-all duration-300 disabled:cursor-not-allowed"
-                  whileHover={selectedImage && !publiciteLoading ? { scale: 1.02 } : {}}
-                  whileTap={selectedImage && !publiciteLoading ? { scale: 0.98 } : {}}
-                  onClick={handleSendPublicite}
-                  disabled={!selectedImage || publiciteLoading}
-                >
-                  {publiciteLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Envoi en cours...
-                    </>
-                  ) : (
-                    <>
-                      <Image className="w-5 h-5" />
-                      Envoyer la publicité aux Clients
-                    </>
-                  )}
-                </motion.button>
-              </div>
-            </motion.div>
-
-            {/* Activités récentes */}
-            <motion.div 
-              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-emerald-900">
-                  Activités récentes
-                </h2>
-                <Activity className="w-5 h-5 text-emerald-400" />
-              </div>
-              {loading.activities ? (
-                <div className="space-y-4">
-                  {Array(3).fill(0).map((_, index) => (
-                    <div key={index} className="flex items-start p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                      <div className="bg-emerald-200 p-2 rounded-lg mr-3 mt-1 animate-pulse">
-                        <div className="w-4 h-4"></div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="h-4 bg-emerald-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                        <div className="h-3 bg-emerald-200 rounded w-1/2 animate-pulse"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentActivities?.length > 0 ? (
-                    recentActivities.map((activity, index) => (
-                      <motion.div 
-                        key={activity.id} 
-                        className="flex items-start p-3 bg-emerald-50/50 rounded-xl border border-emerald-100"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 + (index * 0.1) }}
-                      >
-                        <div className="bg-emerald-100 p-2 rounded-lg mr-3 mt-1">
-                          <Activity className="w-4 h-4 text-emerald-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-emerald-900">
-                            <span className="font-semibold">{activity.user}</span>{" "}
-                            {activity.action}
-                            {activity.amount && (
-                              <span className="text-emerald-600 ml-1 font-semibold">
-                                ({activity.amount})
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-xs text-emerald-600/70 mt-1">
-                            {activity.time}
-                          </p>
-                        </div>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <Activity className="w-12 h-12 text-emerald-300 mx-auto mb-3" />
-                      <p className="text-emerald-600/70 font-medium">Aucune activité récente</p>
-                    </div>
-                  )}
+              {/* Informations de l'image */}
+              {selectedImage && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-blue-800 font-medium text-sm">
+                      1 image sélectionnée
+                    </p>
+                    <p className="text-blue-600/80 text-xs">
+                      Taille: {(selectedImage.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </div>
                 </div>
               )}
-              {!loading.activities && commandes?.length > 0 && (
-                <Link to="/commandes">
-                  <motion.button 
-                    className="w-full mt-4 py-2 text-emerald-600 hover:text-emerald-700 font-medium flex items-center justify-center gap-2 transition-all duration-300"
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    <span>Voir toutes les activités</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.button>
-                </Link>
-              )}
-            </motion.div>
-          </div>
+
+              {/* Bouton d'envoi */}
+              <motion.button 
+                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg transition-all duration-300 disabled:cursor-not-allowed"
+                whileHover={selectedImage && !publiciteLoading ? { scale: 1.02 } : {}}
+                whileTap={selectedImage && !publiciteLoading ? { scale: 0.98 } : {}}
+                onClick={handleSendPublicite}
+                disabled={!selectedImage || publiciteLoading}
+              >
+                {publiciteLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    <Image className="w-5 h-5" />
+                    Envoyer la publicité aux Clients
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
 
           {/* Boutiques et Clients récents */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <RecentBoutiques
               boutiques={boutiques}
               loading={loading.boutiques}
-              formatDate={formatDate}
               buttonVariants={buttonVariants}
+              formatDate={formatDate} // AJOUTÉ
             />
 
             <RecentClients
               clients={clients}
               loading={loading.clients}
-              formatDate={formatDate}
               buttonVariants={buttonVariants}
+              formatDate={formatDate} // AJOUTÉ
             />
           </div>
         </main>

@@ -2,11 +2,19 @@ import { create } from 'zustand';
 import { notificationsService } from '../services/notifications.service';
 
 const useNotificationStore = create((set) => ({
+    // États pour l'envoi de notifications
     loading: false,
     error: null,
     success: false,
     users: [],
     boutiques: [],
+
+    // États pour les activités/notifications reçues
+    activities: [],
+    unreadCount: 0,
+    activitiesLoading: false,
+
+    // ==================== FONCTIONS POUR L'ENVOI DE NOTIFICATIONS ====================
 
     // Récupérer tous les utilisateurs et boutiques
     fetchUsers: async () => {
@@ -88,6 +96,37 @@ const useNotificationStore = create((set) => ({
             set({ error: error.message, loading: false, success: false });
             throw error;
         }
+    },
+
+    // ==================== FONCTIONS POUR LES ACTIVITÉS/NOTIFICATIONS REÇUES ====================
+
+    // Mettre à jour le compteur basé sur les commandes récentes
+    updateUnreadCount: (commandes) => {
+        if (!commandes || !Array.isArray(commandes)) {
+            set({ unreadCount: 0 });
+            return;
+        }
+
+        // Logique pour déterminer quelles commandes sont "nouvelles"
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+        
+        const newActivities = commandes.filter(cmd => {
+            if (!cmd?.created_at) return false;
+            try {
+                const cmdDate = new Date(cmd.created_at);
+                return cmdDate > twentyFourHoursAgo;
+            } catch {
+                return false;
+            }
+        }).length;
+
+        set({ unreadCount: newActivities });
+    },
+
+    // Marquer toutes les activités comme lues
+    markAllAsRead: () => {
+        set({ unreadCount: 0 });
     },
 
     // Réinitialiser les états

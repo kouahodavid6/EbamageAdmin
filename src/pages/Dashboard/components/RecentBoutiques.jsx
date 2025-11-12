@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Store, Eye, ArrowRight } from "lucide-react";
+import { Store, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const RecentBoutiques = ({ 
@@ -58,9 +58,6 @@ const RecentBoutiques = ({
                             <div className="h-4 bg-emerald-200 rounded w-3/4 mb-2 animate-pulse"></div>
                             <div className="h-3 bg-emerald-200 rounded w-1/2 animate-pulse"></div>
                         </div>
-                        <div className="text-emerald-300">
-                            <ArrowRight className="w-4 h-4" />
-                        </div>
                     </div>
                 ))}
                 </div>
@@ -98,7 +95,7 @@ const RecentBoutiques = ({
                                             {boutique.nom_btq}
                                         </h4>
                                         <p className="text-xs text-emerald-600/70">
-                                            Inscrite le {formatDate(boutique.created_at)}
+                                            Inscrite le {formatDate ? formatDate(boutique.created_at) : "Date inconnue"}
                                         </p>
                                     </div>
                                 </motion.div>

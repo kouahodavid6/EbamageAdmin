@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Users, Eye, ArrowRight, User } from "lucide-react";
+import { Users, Eye, User } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const RecentClients = ({ 
@@ -57,9 +57,6 @@ const RecentClients = ({
                                 <div className="h-4 bg-emerald-200 rounded w-3/4 mb-2 animate-pulse"></div>
                                 <div className="h-3 bg-emerald-200 rounded w-1/2 animate-pulse"></div>
                             </div>
-                            <div className="text-emerald-300">
-                                <ArrowRight className="w-4 h-4" />
-                            </div>
                         </div>
                     ))}
                 </div>
@@ -95,7 +92,7 @@ const RecentClients = ({
                                             {client.nom_clt}
                                         </h4>
                                         <p className="text-xs text-emerald-600/70">
-                                            Inscrit le {formatDate(client.created_at)}
+                                            Inscrit le {formatDate ? formatDate(client.created_at) : "Date inconnue"}
                                         </p>
                                     </div>
                                 </motion.div>
