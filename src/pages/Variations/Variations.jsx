@@ -67,6 +67,15 @@ const Variations = () => {
                             <p className="text-green-600 mt-1 text-xs xs:text-sm sm:text-base">
                                 Définissez les types de variations pour vos produits
                             </p>
+                            <div>
+                                <h1 className="font-bold mb-3 text-sm md:text-base">Variations possibles :</h1>
+                                <div className="flex flex-wrap items-center gap-1 md:gap-2">
+                                    <p className="bg-emerald-200 py-1 px-2 md:px-3 rounded-lg font-bold text-sm md:text-base whitespace-nowrap">color</p>
+                                    <p className="bg-emerald-200 py-1 px-2 md:px-3 rounded-lg font-bold text-sm md:text-base whitespace-nowrap">taille</p>
+                                    <p className="bg-emerald-200 py-1 px-2 md:px-3 rounded-lg font-bold text-sm md:text-base whitespace-nowrap">matiere</p>
+                                    <p className="bg-emerald-200 py-1 px-2 md:px-3 rounded-lg font-bold text-sm md:text-base whitespace-nowrap">longueur</p>
+                                </div>
+                            </div>
                         </div>
                         <button
                             onClick={() => setModalOpen(true)}
