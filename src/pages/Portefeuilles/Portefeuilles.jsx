@@ -656,8 +656,9 @@ const Portefeuilles = () => {
                                         {filteredReclamations.map((reclamation) => (
                                             <tr key={reclamation.hashid} className="border-b border-emerald-50 hover:bg-emerald-50/50">
                                                 <td className="py-3 px-4">
-                                                    <div className="font-medium text-emerald-900">
+                                                    <div className="font-medium text-emerald-900 flex-column">
                                                         {reclamation.nom_boutique || 'Boutique sans nom'}
+                                                        <p className="text-sm text-gray-400">{reclamation.tel_boutique}</p>
                                                     </div>
                                                 </td>
                                                 <td className="py-3 px-4 text-sm text-emerald-600">
