@@ -2,10 +2,16 @@ import { Menu, Bell, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import useNotificationStore from '../../stores/notifications.store';
+import { useEffect } from 'react';
 
 const DashboardHeader = ({ title, toggleSidebar }) => {
     const navigate = useNavigate();
-    const { unreadCount, markAllAsRead } = useNotificationStore();
+    const { unreadCount, markAllAsRead, initialize } = useNotificationStore();
+
+    // Initialiser le store au montage du composant
+    useEffect(() => {
+        initialize();
+    }, [initialize]);
 
     const handleNotificationsClick = () => {
         // Marquer toutes les notifications comme lues lorsqu'on clique
@@ -38,7 +44,7 @@ const DashboardHeader = ({ title, toggleSidebar }) => {
 
             {/* Zone à droite : notifications + profil */}
             <div className="ml-auto flex items-center space-x-4">
-                {/* Bouton cloche de notifications - MAINTENANT CLICKABLE */}
+                {/* Bouton cloche de notifications */}
                 <motion.button 
                     onClick={handleNotificationsClick}
                     className="p-2 rounded-full text-emerald-600 hover:bg-emerald-100/80 transition-all duration-300 relative border border-transparent hover:border-emerald-200"
@@ -48,7 +54,12 @@ const DashboardHeader = ({ title, toggleSidebar }) => {
                     <Bell className="h-6 w-6" />
                     {/* Afficher le point rouge seulement s'il y a des notifications non lues */}
                     {unreadCount > 0 && (
-                        <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-gradient-to-r from-red-400 to-red-500 rounded-full border border-white"/>
+                        <motion.span 
+                            className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-gradient-to-r from-red-400 to-red-500 rounded-full border border-white"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                        />
                     )}
                 </motion.button>
 

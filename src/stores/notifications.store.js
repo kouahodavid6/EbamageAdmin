@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { notificationsService } from '../services/notifications.service';
 
-const useNotificationStore = create((set) => ({
+const useNotificationStore = create((set, get) => ({
     // États pour l'envoi de notifications
     loading: false,
     error: null,
@@ -13,6 +13,7 @@ const useNotificationStore = create((set) => ({
     activities: [],
     unreadCount: 0,
     activitiesLoading: false,
+    lastReadTime: null, // Stocker le moment où on a marqué comme lu
 
     // ==================== FONCTIONS POUR L'ENVOI DE NOTIFICATIONS ====================
 
@@ -107,15 +108,33 @@ const useNotificationStore = create((set) => ({
             return;
         }
 
-        // Logique pour déterminer quelles commandes sont "nouvelles"
-        const now = new Date();
-        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+        const { lastReadTime } = get();
         
+        // Si pas de lastReadTime, considérer toutes les commandes récentes comme non lues
+        if (!lastReadTime) {
+            const now = new Date();
+            const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            
+            const newActivities = commandes.filter(cmd => {
+                if (!cmd?.created_at) return false;
+                try {
+                    const cmdDate = new Date(cmd.created_at);
+                    return cmdDate > twentyFourHoursAgo;
+                } catch {
+                    return false;
+                }
+            }).length;
+
+            set({ unreadCount: newActivities });
+            return;
+        }
+
+        // Sinon, compter seulement les commandes après le dernier marquage comme lu
         const newActivities = commandes.filter(cmd => {
             if (!cmd?.created_at) return false;
             try {
                 const cmdDate = new Date(cmd.created_at);
-                return cmdDate > twentyFourHoursAgo;
+                return cmdDate > new Date(lastReadTime);
             } catch {
                 return false;
             }
@@ -126,7 +145,21 @@ const useNotificationStore = create((set) => ({
 
     // Marquer toutes les activités comme lues
     markAllAsRead: () => {
-        set({ unreadCount: 0 });
+        set({ 
+            unreadCount: 0,
+            lastReadTime: new Date().toISOString() // Stocker le moment du marquage
+        });
+        
+        // Sauvegarder dans localStorage pour persister entre les rafraîchissements
+        localStorage.setItem('notifications_lastRead', new Date().toISOString());
+    },
+
+    // Initialiser le store avec les données du localStorage
+    initialize: () => {
+        const savedLastRead = localStorage.getItem('notifications_lastRead');
+        if (savedLastRead) {
+            set({ lastReadTime: savedLastRead });
+        }
     },
 
     // Réinitialiser les états
