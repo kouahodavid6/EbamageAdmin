@@ -1,214 +1,210 @@
+// src/stores/commande.store.js
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { commandeService } from "../services/commande.service";
-import { toast } from 'react-hot-toast';
+import { toast } from "react-hot-toast";
 
-const useCommandeStore = create((set, get) => ({
-    commandes: [],
-    filteredCommandes: [],
-    loading: false,
-    error: null,
-    filters: {
-        statut: '',
-        localisation: ''
-    },
+// Calcul du statut global d'une commande à partir de ses sous-commandes
+const computeCommandeStatutFromArticles = (articles = []) => {
+  if (!Array.isArray(articles) || articles.length === 0) return "En attente";
 
-    fetchCommandes: async () => {
-        set({ loading: true, error: null });
-        try {
-            const response = await commandeService.getCommandes();
-            set({ 
-                commandes: response.data || [], 
-                filteredCommandes: response.data || [],
-                loading: false 
-            });
-        } catch (error) {
-            set({ error: error.message, loading: false });
-            toast.error("Erreur lors du chargement des commandes");
+  const allLivree = articles.every(a => a?.statut_sous_commande === "Livrée");
+  const allConfirme = articles.every(a => a?.statut_sous_commande === "Confirmée");
+
+  if (allLivree) return "Livrée";
+  if (allConfirme) return "Confirmée";
+  return "En attente";
+};
+
+const initialState = {
+  commandes: [],
+  filteredCommandes: [],
+  loading: false,
+  error: null,
+  filters: { statut: "", localisation: "" },
+  toastMessage: null
+};
+
+const useCommandeStore = create(persist((set, get) => ({
+  ...initialState,
+
+  _setLoading: (v) => set({ loading: v }),
+  _setError: (err) => set({ error: err }),
+
+  _updateCommandeInLists: (hashid, patch) => {
+    set(state => ({
+      commandes: state.commandes.map(c => c?.hashid === hashid ? { ...c, ...patch } : c),
+      filteredCommandes: state.filteredCommandes.map(c => c?.hashid === hashid ? { ...c, ...patch } : c)
+    }));
+  },
+
+  clearToast: () => set({ toastMessage: null }),
+
+  fetchCommandes: async () => {
+    set({ loading: true, error: null });
+    try {
+      const resp = await commandeService.getCommandes();
+      const data = resp?.data ?? resp;
+      const commandes = Array.isArray(data) ? data : (data?.commandes ?? []);
+      set({ commandes, filteredCommandes: commandes, loading: false });
+      return commandes;
+    } catch (error) {
+      set({ error: error?.message ?? "Erreur", loading: false });
+      toast.error("Erreur lors du chargement des commandes");
+      throw error;
+    }
+  },
+
+  appliquerFiltres: (filters) => {
+    set({ filters });
+    const { commandes } = get();
+    let filtered = Array.isArray(commandes) ? [...commandes] : [];
+
+    if (filters?.statut) {
+      filtered = filtered.filter(commande => commande?.statut === filters.statut);
+    }
+
+    if (filters?.localisation) {
+      const searchTerm = filters.localisation.toLowerCase();
+      filtered = filtered.filter(commande => {
+        const ville = commande?.localisation?.ville ?? "";
+        const commune = commande?.localisation?.commune ?? "";
+        return ville.toLowerCase().includes(searchTerm) || commune.toLowerCase().includes(searchTerm);
+      });
+    }
+
+    set({ filteredCommandes: filtered });
+  },
+
+  reinitialiserFiltres: () => {
+    const { commandes } = get();
+    set({ filters: { statut: "", localisation: "" }, filteredCommandes: commandes ?? [] });
+  },
+
+  // --- ACTIONS SUR LA COMMANDE PRINCIPALE ---
+
+  confirmerCommande: async (hashid, onSuccess) => {
+    set({ loading: true, error: null });
+    try {
+      const resp = await commandeService.confirmerCommande(hashid);
+      const data = resp?.data ?? resp;
+      const articles = data?.articles ?? null;
+      const message = data?.message ?? "Commande confirmée";
+
+      if (Array.isArray(articles)) {
+        const statut = computeCommandeStatutFromArticles(articles);
+        get()._updateCommandeInLists(hashid, { statut, articles });
+      } else {
+        const commande = get().commandes.find(c => c.hashid === hashid);
+        if (commande) {
+          const newArticles = (commande.articles ?? []).map(a => ({ ...a, statut_sous_commande: "Confirmée" }));
+          get()._updateCommandeInLists(hashid, { statut: "Confirmée", articles: newArticles });
         }
-    },
+      }
 
-    // Filtrer les commandes par ville/commune
-    filtrerCommandes: async (recherche = '') => {
-        set({ loading: true, error: null });
-        try {
-            const response = await commandeService.filtrerCommandes(recherche);
-            set({ 
-                filteredCommandes: response.data || [],
-                loading: false 
-            });
-            return response;
-        } catch (error) {
-            set({ error: error.message, loading: false });
-            toast.error("Erreur lors du filtrage des commandes");
-            throw error;
+      toast.success(message);
+      set({ toastMessage: message, loading: false });
+      if (onSuccess) onSuccess();
+      return resp;
+    } catch (error) {
+      set({ loading: false });
+      const errMsg = error?.message ?? "Erreur lors de la confirmation";
+      toast.error(errMsg);
+      throw error;
+    }
+  },
+
+  livrerCommande: async (hashid, onSuccess) => {
+    set({ loading: true, error: null });
+    try {
+      const commande = get().commandes.find(c => c.hashid === hashid);
+      const currentStatut = commande?.statut ?? computeCommandeStatutFromArticles(commande?.articles);
+
+      if (currentStatut !== "Confirmée") {
+        const err = "La commande doit être confirmée avant d'être livrée.";
+        toast.error(err);
+        set({ loading: false });
+        throw new Error(err);
+      }
+
+      const resp = await commandeService.livrerCommande(hashid);
+      const data = resp?.data ?? resp;
+      const articles = data?.articles ?? null;
+      const message = data?.message ?? "Commande livrée";
+
+      if (Array.isArray(articles)) {
+        const statut = computeCommandeStatutFromArticles(articles);
+        get()._updateCommandeInLists(hashid, { statut, articles });
+      } else {
+        const commandeLocal = get().commandes.find(c => c.hashid === hashid);
+        if (commandeLocal) {
+          const newArticles = (commandeLocal.articles ?? []).map(a => ({ ...a, statut_sous_commande: "Livrée" }));
+          get()._updateCommandeInLists(hashid, { statut: "Livrée", articles: newArticles });
         }
-    },
+      }
 
-    // Appliquer les filtres locaux (statut et localisation)
-    appliquerFiltres: (filters) => {
-        set({ filters });
-        const { commandes } = get();
-        
-        let filtered = [...commandes];
+      toast.success(message);
+      set({ toastMessage: message, loading: false });
+      if (onSuccess) onSuccess();
+      return resp;
+    } catch (error) {
+      set({ loading: false });
+      const errMsg = error?.message ?? "Erreur lors de la livraison";
+      toast.error(errMsg);
+      throw error;
+    }
+  },
 
-        // Filtre par statut
-        if (filters.statut) {
-            filtered = filtered.filter(commande => 
-                commande.statut === filters.statut
-            );
-        }
+  // --- ACTION SUR UNE SOUS-COMMANDE ---
+  changerStatutSousCommande: async (hashidCommande, hashidArticle, statut, onSuccess) => {
+    set({ loading: true, error: null });
+    try {
+      const commande = get().commandes.find(c => c.hashid === hashidCommande);
+      const article = commande?.articles?.find(a => a.hashid === hashidArticle);
+      const current = article?.statut_sous_commande ?? "En attente";
 
-        // Filtre par localisation (ville ou commune)
-        if (filters.localisation) {
-            const searchTerm = filters.localisation.toLowerCase();
-            filtered = filtered.filter(commande => 
-                commande.localisation.ville.toLowerCase().includes(searchTerm) ||
-                commande.localisation.commune.toLowerCase().includes(searchTerm)
-            );
-        }
+      if (statut === "Livrée" && current !== "Confirmée") {
+        const err = "Une sous-commande doit être confirmée avant d'être livrée.";
+        toast.error(err);
+        set({ loading: false });
+        throw new Error(err);
+      }
 
-        set({ filteredCommandes: filtered });
-    },
+      const resp = await commandeService.changerStatutSousCommande(hashidCommande, hashidArticle, statut);
+      const data = resp?.data ?? resp;
+      const returnedArticles = data?.articles ?? commande?.articles ?? [];
+      const newStatutCommande = computeCommandeStatutFromArticles(returnedArticles);
 
-    // Réinitialiser les filtres
-    reinitialiserFiltres: () => {
-        const { commandes } = get();
-        set({ 
-            filters: { statut: '', localisation: '' },
-            filteredCommandes: commandes 
-        });
-    },
+      // Si la commande principale est Livrée, bloquer toute modification
+      if (commande?.statut === "Livrée") {
+        toast.error("La commande principale est déjà livrée. Aucune modification possible.");
+        set({ loading: false });
+        throw new Error("Commande principale Livrée");
+      }
 
-    // Annuler une commande
-    annulerCommande: async (hashid, onSuccess) => {
-        try {
-            const response = await commandeService.annulerCommande(hashid);
-            
-            // Mettre à jour la commande dans les listes
-            set(state => ({
-                commandes: state.commandes.map(commande =>
-                    commande.hashid === hashid 
-                        ? { ...commande, statut: 'Annulée', articles: response.data.articles }
-                        : commande
-                ),
-                filteredCommandes: state.filteredCommandes.map(commande =>
-                    commande.hashid === hashid 
-                        ? { ...commande, statut: 'Annulée', articles: response.data.articles }
-                        : commande
-                )
-            }));
-            
-            toast.success(response.message || "Commande annulée avec succès");
-            if (onSuccess) onSuccess();
-            return response;
-        } catch (error) {
-            toast.error(error.message || "Erreur lors de l'annulation de la commande");
-            throw error;
-        }
-    },
+      get()._updateCommandeInLists(hashidCommande, { articles: returnedArticles, statut: newStatutCommande });
 
-    // Livrer une commande
-    livrerCommande: async (hashid, onSuccess) => {
-        try {
-            const response = await commandeService.livrerCommande(hashid);
-            
-            set(state => ({
-                commandes: state.commandes.map(commande =>
-                    commande.hashid === hashid 
-                        ? { ...commande, statut: 'Livrée', articles: response.data.articles }
-                        : commande
-                ),
-                filteredCommandes: state.filteredCommandes.map(commande =>
-                    commande.hashid === hashid 
-                        ? { ...commande, statut: 'Livrée', articles: response.data.articles }
-                        : commande
-                )
-            }));
-            
-            toast.success(response.message || "Commande livrée avec succès");
-            if (onSuccess) onSuccess();
-            return response;
-        } catch (error) {
-            toast.error(error.message || "Erreur lors de la livraison de la commande");
-            throw error;
-        }
-    },
+      toast.success(data?.message ?? "Statut mis à jour");
+      set({ toastMessage: data?.message ?? "Statut mis à jour", loading: false });
+      if (onSuccess) onSuccess();
+      return resp;
+    } catch (error) {
+      set({ loading: false });
+      throw error;
+    }
+  },
 
-    // Confirmer une commande
-    confirmerCommande: async (hashid, onSuccess) => {
-        try {
-            const response = await commandeService.confirmerCommande(hashid);
-            
-            set(state => ({
-                commandes: state.commandes.map(commande =>
-                    commande.hashid === hashid 
-                        ? { ...commande, statut: 'Confirmée', articles: response.data.articles }
-                        : commande
-                ),
-                filteredCommandes: state.filteredCommandes.map(commande =>
-                    commande.hashid === hashid 
-                        ? { ...commande, statut: 'Confirmée', articles: response.data.articles }
-                        : commande
-                )
-            }));
-            
-            toast.success(response.message || "Commande confirmée avec succès");
-            if (onSuccess) onSuccess();
-            return response;
-        } catch (error) {
-            toast.error(error.message || "Erreur lors de la confirmation de la commande");
-            throw error;
-        }
-    },
+  clearError: () => set({ error: null })
 
-    // Changer statut d'une sous-commande
-    changerStatutSousCommande: async (hashidCommande, hashidArticle, statut, libVariation = null, onSuccess) => {
-        try {
-            const response = await commandeService.changerStatutSousCommande(
-                hashidCommande, 
-                hashidArticle, 
-                statut, 
-                libVariation
-            );
-            
-            // Mettre à jour les articles de la commande dans les listes
-            set(state => ({
-                commandes: state.commandes.map(commande =>
-                    commande.hashid === hashidCommande 
-                        ? { ...commande, articles: response.articles }
-                        : commande
-                ),
-                filteredCommandes: state.filteredCommandes.map(commande =>
-                    commande.hashid === hashidCommande 
-                        ? { ...commande, articles: response.articles }
-                        : commande
-                )
-            }));
-
-            // Vérifier si toutes les sous-commandes sont confirmées
-            const commande = get().commandes.find(c => c.hashid === hashidCommande);
-            if (commande && statut === 'Confirmée') {
-                const toutesConfirmees = commande.articles.every(article => 
-                    article.statut_sous_commande === 'Confirmée'
-                );
-                
-                if (toutesConfirmees) {
-                    // Auto-confirmer la commande principale
-                    get().confirmerCommande(hashidCommande, onSuccess);
-                    return; // Ne pas afficher le toast deux fois
-                }
-            }
-
-            toast.success(response.message || "Statut de la sous-commande mis à jour");
-            if (onSuccess) onSuccess();
-            return response;
-        } catch (error) {
-            toast.error(error.message || "Erreur lors du changement de statut");
-            throw error;
-        }
-    },
-
-    clearError: () => set({ error: null })
+}),
+{
+  name: "commande-store-v2",
+  partialize: (state) => ({
+    commandes: state.commandes,
+    filteredCommandes: state.filteredCommandes,
+    filters: state.filters
+  }),
+  version: 2
 }));
 
 export default useCommandeStore;
