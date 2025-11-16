@@ -135,24 +135,30 @@ const CommandeDetailModal = ({ commande, onClose }) => {
     if (loadingAction) return true;
     if (commande?.statut === "Annulée") return true;
 
+    // Si toutes les sous-commandes sont livrées, la commande est considérée comme livrée
+    const commandeEstLivree = commande?.statut === "Livrée" || toutesSousCommandesAvecStatut("Livrée");
+
     switch (actionType) {
       case "confirmer":
-        return commande?.statut === "Confirmée" || commande?.statut === "Livrée" || toutesSousCommandesAvecStatut("Confirmée");
+        return commande?.statut === "Confirmée" || commandeEstLivree || toutesSousCommandesAvecStatut("Confirmée");
       case "livrer":
-        return commande?.statut !== "Confirmée" || commande?.statut === "Livrée" || toutesSousCommandesAvecStatut("Livrée");
+        return commande?.statut === "Livrée" || commandeEstLivree || !toutesSousCommandesAvecStatut("Confirmée");
       case "annuler":
-        return commande?.statut === "Annulée";
+        // Griser le bouton annuler si la commande est livrée (toutes les sous-commandes sont livrées)
+        return commande?.statut === "Annulée" || commandeEstLivree;
       default:
         return false;
     }
   };
 
   const getCommandeButtonText = (actionType) => {
+    const commandeEstLivree = commande?.statut === "Livrée" || toutesSousCommandesAvecStatut("Livrée");
+    
     switch (actionType) {
       case "confirmer":
         return commande?.statut === "Confirmée" || toutesSousCommandesAvecStatut("Confirmée") ? "Confirmée" : "Confirmer la commande";
       case "livrer":
-        return commande?.statut === "Livrée" || toutesSousCommandesAvecStatut("Livrée") ? "Livrée" : "Marquer comme livrée";
+        return commandeEstLivree ? "Livrée" : "Marquer comme livrée";
       case "annuler":
         return commande?.statut === "Annulée" ? "Annulée" : "Annuler la commande";
       default:
