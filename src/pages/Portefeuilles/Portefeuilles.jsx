@@ -101,7 +101,7 @@ const Portefeuilles = () => {
     const handleConfirmPaiement = async (hashid) => {
         try {
             await marquerCommePaye(hashid);
-            // Le toast et le rechargement sont gérés dans le modal via onSuccess
+            // Le toast et l'actualisation sont gérés dans le modal via onSuccess
         } catch (error) {
             console.error('Erreur:', error);
             showToast('Erreur lors de la confirmation du paiement', 'error');
@@ -111,10 +111,10 @@ const Portefeuilles = () => {
     // Fonction pour gérer le succès (appelée par le modal)
     const handleSuccess = (message) => {
         showToast(message, 'success');
-        // Recharger la page après l'affichage du toast
+        // Actualiser les données après l'affichage du toast
         setTimeout(() => {
-            window.location.reload();
-        }, 1000);
+            loadData();
+        }, 500);
     };
 
     // Réinitialiser tous les filtres
