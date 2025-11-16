@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
-import { motion } from "framer-motion";
+import ConfirmationPaiementModal from "./components/ConfirmationPaiementModal";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     DollarSign,
     TrendingUp,
@@ -23,6 +24,9 @@ const Portefeuilles = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatut, setFilterStatut] = useState("statut_tous");
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedReclamation, setSelectedReclamation] = useState(null);
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     // Store Zustand
     const {
@@ -76,19 +80,41 @@ const Portefeuilles = () => {
         }
     };
 
-    const handleMarquerPaye = async (hashid, nomBoutique) => {
-        if (window.confirm(
-            `✅ Paiement manuel effectué ?\n\n` +
-            `• Vous avez payé ${nomBoutique} manuellement\n` +
-            `• Via votre téléphone (Wave, OM, etc.)\n` +
-            `• Confirmer pour marquer comme réglé ?`
-        )) {
-            try {
-                await marquerCommePaye(hashid);
-            } catch (error) {
-                console.error('Erreur:', error);
-            }
+    const handleOpenModal = (reclamation) => {
+        setSelectedReclamation(reclamation);
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setSelectedReclamation(null);
+    };
+
+    // Fonction pour afficher le toast
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => {
+            setToast({ show: false, message: '', type: 'success' });
+        }, 3000);
+    };
+
+    const handleConfirmPaiement = async (hashid) => {
+        try {
+            await marquerCommePaye(hashid);
+            // Le toast et le rechargement sont gérés dans le modal via onSuccess
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors de la confirmation du paiement', 'error');
         }
+    };
+
+    // Fonction pour gérer le succès (appelée par le modal)
+    const handleSuccess = (message) => {
+        showToast(message, 'success');
+        // Recharger la page après l'affichage du toast
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
     };
 
     // Réinitialiser tous les filtres
@@ -186,6 +212,33 @@ const Portefeuilles = () => {
         }
     };
 
+    // Composant Toast
+    const Toast = () => (
+        <AnimatePresence>
+            {toast.show && (
+                <motion.div
+                    initial={{ opacity: 0, y: -50, scale: 0.8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -50, scale: 0.8 }}
+                    className={`fixed top-4 right-4 z-[10001] p-4 rounded-xl shadow-lg border ${
+                        toast.type === 'success' 
+                            ? 'bg-green-50 border-green-200 text-green-800' 
+                            : 'bg-red-50 border-red-200 text-red-800'
+                    }`}
+                >
+                    <div className="flex items-center gap-2">
+                        {toast.type === 'success' ? (
+                            <CheckCircle className="w-5 h-5" />
+                        ) : (
+                            <AlertCircle className="w-5 h-5" />
+                        )}
+                        <span className="font-medium">{toast.message}</span>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+
     // Squelette pour les cartes de statistiques
     const StatCardSkeleton = () => (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6 animate-pulse">
@@ -257,6 +310,19 @@ const Portefeuilles = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50/20 flex flex-col md:flex-row">
+            {/* Toast */}
+            <Toast />
+
+            {/* Modal de confirmation de paiement */}
+            <ConfirmationPaiementModal
+                isOpen={modalOpen}
+                onClose={handleCloseModal}
+                onConfirm={handleConfirmPaiement}
+                onSuccess={handleSuccess}
+                reclamation={selectedReclamation}
+                loading={loading}
+            />
+
             {/* Overlay mobile */}
             {sidebarOpen && (
                 <div
@@ -695,7 +761,7 @@ const Portefeuilles = () => {
                                                             variants={buttonVariants}
                                                             whileHover="hover"
                                                             whileTap="tap"
-                                                            onClick={() => handleMarquerPaye(reclamation.hashid, reclamation.nom_boutique)}
+                                                            onClick={() => handleOpenModal(reclamation)}
                                                             disabled={loading}
                                                         >
                                                             <CheckCircle className="w-3 h-3" />
