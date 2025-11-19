@@ -1,3 +1,4 @@
+// src/pages/Dashboard/Dashboard.jsx
 import { useState, useEffect } from "react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
@@ -482,17 +483,30 @@ const Dashboard = () => {
               <h2 className="text-lg font-semibold text-emerald-900">
                 Publicité pour les Clients
               </h2>
-              {selectedImage && (
-                <motion.button
-                  onClick={clearImage}
-                  className="text-red-500 hover:text-red-700 font-medium text-sm flex items-center gap-2 transition-all duration-300"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Supprimer
-                </motion.button>
-              )}
+              <div className="flex items-center gap-4">
+                {selectedImage && (
+                  <motion.button
+                    onClick={clearImage}
+                    className="text-red-500 hover:text-red-700 font-medium text-sm flex items-center gap-2 transition-all duration-300"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Supprimer
+                  </motion.button>
+                )}
+                {/* NOUVEAU BOUTON POUR VOIR LES PUBLICITÉS */}
+                <Link to="/publicites">
+                  <motion.button
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm flex items-center gap-2 transition-all duration-300"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Image className="w-4 h-4" />
+                    Voir toutes les publicités
+                  </motion.button>
+                </Link>
+              </div>
             </div>
             
             <div className="space-y-6">
@@ -613,14 +627,14 @@ const Dashboard = () => {
               boutiques={boutiques}
               loading={loading.boutiques}
               buttonVariants={buttonVariants}
-              formatDate={formatDate} // AJOUTÉ
+              formatDate={formatDate}
             />
 
             <RecentClients
               clients={clients}
               loading={loading.clients}
               buttonVariants={buttonVariants}
-              formatDate={formatDate} // AJOUTÉ
+              formatDate={formatDate}
             />
           </div>
         </main>

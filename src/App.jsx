@@ -15,6 +15,7 @@ import Commandes from './pages/Commandes/Commandes';
 import Localisations from './pages/Localisations/Localisations';
 import Profil from './pages/Profil/Profil';
 import Portefeuilles from './pages/Portefeuilles/Portefeuilles';
+import Publicites from './pages/Publicites/Publicites';
 import useAuthStore from './stores/auth.store';
 
 import NotFound from './components/NotFound';
@@ -177,6 +178,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Portefeuilles />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/publicites" 
+              element={
+                <ProtectedRoute>
+                  <Publicites />
                 </ProtectedRoute>
               } 
             />
