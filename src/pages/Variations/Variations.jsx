@@ -1,19 +1,50 @@
 import { useEffect, useState } from "react";
-import { Plus, Settings } from "lucide-react";
+import { Plus, Settings, Edit3, Trash2 } from "lucide-react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
 import useVariationStore from "../../stores/variation.store";
 import VariationModal from "./components/VariationModal";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 
 const Variations = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [variationToDelete, setVariationToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const { variations, fetchVariations, loading } = useVariationStore();
+    const { variations, fetchVariations, loading, deleteVariation } = useVariationStore();
 
     useEffect(() => {
         fetchVariations();
     }, [fetchVariations]);
+
+    const handleDeleteClick = (variation) => {
+        setVariationToDelete(variation);
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!variationToDelete) return;
+        
+        setIsDeleting(true);
+        const result = await deleteVariation(variationToDelete.hashid);
+        setIsDeleting(false);
+        
+        if (result.success) {
+            setDeleteModalOpen(false);
+            setVariationToDelete(null);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setDeleteModalOpen(false);
+        setVariationToDelete(null);
+    };
+
+    const isColorVariation = (variation) => {
+        return variation.nom_variation === 'color';
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
@@ -68,12 +99,11 @@ const Variations = () => {
                                 Définissez les types de variations pour vos produits
                             </p>
                             <div>
-                                <h1 className="font-bold mb-3 text-sm md:text-base">Variations possibles :</h1>
+                                <h1 className="font-bold mb-3 text-sm md:text-base">Variation requise :</h1>
                                 <div className="flex flex-wrap items-center gap-1 md:gap-2">
-                                    <p className="bg-emerald-200 py-1 px-2 md:px-3 rounded-lg font-bold text-sm md:text-base whitespace-nowrap">color</p>
-                                    <p className="bg-emerald-200 py-1 px-2 md:px-3 rounded-lg font-bold text-sm md:text-base whitespace-nowrap">taille</p>
-                                    <p className="bg-emerald-200 py-1 px-2 md:px-3 rounded-lg font-bold text-sm md:text-base whitespace-nowrap">matiere</p>
-                                    <p className="bg-emerald-200 py-1 px-2 md:px-3 rounded-lg font-bold text-sm md:text-base whitespace-nowrap">longueur</p>
+                                    <p className="bg-emerald-200 py-1 px-2 md:px-3 rounded-lg font-bold text-sm md:text-base whitespace-nowrap">
+                                        Couleur
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -113,10 +143,37 @@ const Variations = () => {
                                             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                                                 <Settings className="w-5 h-5 text-green-600" />
                                             </div>
-                                            <h3 className="text-lg font-semibold text-green-900">
-                                                {variation.nom_variation}
-                                            </h3>
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-green-900">
+                                                    {variation.nom_variation === 'color' ? 'Couleur' : variation.nom_variation}
+                                                </h3>
+                                                {isColorVariation(variation) && (
+                                                    <span className="text-xs text-amber-600 font-medium bg-amber-100 px-2 py-1 rounded-full">
+                                                        Variation requise
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
+                                        
+                                        {/* Boutons d'action - cachés pour "color" */}
+                                        {!isColorVariation(variation) && (
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                                    title="Modifier"
+                                                    onClick={() => {/* À implémenter quand disponible */}}
+                                                >
+                                                    <Edit3 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                    title="Supprimer"
+                                                    onClick={() => handleDeleteClick(variation)}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {variation.valeurs?.length > 0 && (
@@ -165,6 +222,15 @@ const Variations = () => {
 
             {/* Modal ajout */}
             <VariationModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+
+            {/* Modal de confirmation de suppression */}
+            <DeleteConfirmModal
+                isOpen={deleteModalOpen}
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCancelDelete}
+                entityName={variationToDelete ? `la variation "${variationToDelete.nom_variation === 'color' ? 'Couleur' : variationToDelete.nom_variation}"` : "cette variation"}
+                isDeleting={isDeleting}
+            />
         </div>
     );
 };

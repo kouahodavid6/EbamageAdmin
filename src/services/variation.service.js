@@ -25,9 +25,19 @@ const listerVariations = async () => {
     }
 };
 
+const supprimerVariation = async (hashid) => {
+    try {
+        const response = await axiosInstance.post(`/api/variation/${hashid}/delete`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
 const VariationService = {
     ajouterVariation,
     listerVariations,
+    supprimerVariation,
 };
 
 export default VariationService;

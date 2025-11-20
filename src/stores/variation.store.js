@@ -29,6 +29,20 @@ const useVariationStore = create((set) => ({
             set({ loading: false });
         }
     },
+
+    deleteVariation: async (hashid) => {
+        try {
+            const res = await VariationService.supprimerVariation(hashid);
+            toast.success(res.message || "Variation supprimée !");
+            set((state) => ({
+                variations: state.variations.filter(v => v.hashid !== hashid),
+            }));
+            return { success: true };
+        } catch (error) {
+            toast.error(error.message || "Erreur lors de la suppression.");
+            return { success: false, error };
+        }
+    },
 }));
 
 export default useVariationStore;
