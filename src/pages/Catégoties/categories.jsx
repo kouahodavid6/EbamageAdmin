@@ -4,7 +4,7 @@ import DashboardHeader from "../components/DashboardHeader";
 import useCategorieStore from "../../stores/categorie.store";
 import RegisterCategorieModal from "./components/RegisterCategorieModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import { Plus, Search, Filter, ChartColumnStacked, Edit, Trash2, Layers, Tag } from "lucide-react";
+import { Plus, Search, ChartColumnStacked, Edit, Trash2, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Categories = () => {
@@ -149,24 +149,13 @@ const Categories = () => {
                                 </div>
                                 <motion.input
                                     type="text"
-                                    placeholder="Rechercher une catégorie..."
+                                    placeholder="Rechercher une catégorie par nom..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="block w-full pl-10 pr-4 py-3 border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 transition-all duration-300 bg-white/50"
                                     whileFocus={{ scale: 1.01 }}
                                 />
                             </div>
-
-                            <motion.button 
-                                className="flex-shrink-0 flex items-center justify-center gap-2 px-6 py-3 border border-emerald-300 rounded-xl hover:bg-emerald-50 transition-all duration-300 whitespace-nowrap font-medium text-emerald-700"
-                                style={{ height: '48px' }}
-                                variants={buttonVariants}
-                                whileHover="hover"
-                                whileTap="tap"
-                            >
-                                <Filter className="w-5 h-5" />
-                                <span>Filtres</span>
-                            </motion.button>
                         </div>
                     </motion.div>
 
