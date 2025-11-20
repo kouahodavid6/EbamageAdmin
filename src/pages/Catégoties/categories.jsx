@@ -4,7 +4,7 @@ import DashboardHeader from "../components/DashboardHeader";
 import useCategorieStore from "../../stores/categorie.store";
 import RegisterCategorieModal from "./components/RegisterCategorieModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import { Plus, Search, Filter, FolderOpen, Edit, Trash2, Layers, Tag } from "lucide-react";
+import { Plus, Search, Filter, ChartColumnStacked, Edit, Trash2, Layers, Tag } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Categories = () => {
@@ -247,14 +247,6 @@ const Categories = () => {
                                             }}
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                        
-                                        {/* Badge produit */}
-                                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 shadow-lg">
-                                            <Tag className="w-3 h-3 text-emerald-600" />
-                                            <span className="text-xs font-medium text-emerald-700">
-                                                {category.productCount || 0} produit{category.productCount !== 1 ? 's' : ''}
-                                            </span>
-                                        </div>
                                     </div>
 
                                     {/* Contenu de la carte */}
@@ -267,15 +259,12 @@ const Categories = () => {
                                                 whileHover={{ rotate: 15, scale: 1.1 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                <FolderOpen className="w-5 h-5 text-emerald-400 group-hover:text-gray-500 transition-colors" />
+                                                <ChartColumnStacked className="w-5 h-5 text-emerald-400 group-hover:text-gray-500 transition-colors" />
                                             </motion.div>
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="flex items-center justify-between pt-4 border-t border-emerald-100">
-                                            <span className="text-sm text-emerald-600/70">
-                                                {category.productCount || 0} produit{category.productCount !== 1 ? 's' : ''}
-                                            </span>
+                                        <div className="flex items-center justify-end pt-4 border-t border-emerald-100">
                                             <div className="flex items-center gap-2">
                                                 <motion.button
                                                     onClick={() => {
