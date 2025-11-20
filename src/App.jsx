@@ -10,6 +10,7 @@ import Activites from './pages/Activités/Activites';
 import Categories from './pages/Catégoties/categories';
 import Variations from './pages/Variations/Variations';
 import Boutiques from './pages/Boutiques/Boutiques';
+import BoutiquesArticles from './pages/BoutiquesArticles/BoutiquesArticles';
 import Clients from './pages/Clients/Clients';
 import Commandes from './pages/Commandes/Commandes';
 import Localisations from './pages/Localisations/Localisations';
@@ -137,6 +138,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Boutiques />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/boutiques/:hashid/articles" 
+              element={
+                <ProtectedRoute>
+                  <BoutiquesArticles  />
                 </ProtectedRoute>
               } 
             />

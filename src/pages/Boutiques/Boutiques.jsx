@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
-import { Search, Filter, Store, Mail, Calendar, CreditCard, Phone } from "lucide-react";
+import { Search, Filter, Store, Mail, Calendar, Phone, ShoppingBag, Trash2 } from "lucide-react";
 import useBoutiqueStore from "../../stores/boutique.store";
 import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const Boutiques = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,22 +16,24 @@ const Boutiques = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { boutiques, loading, error, fetchBoutiques, deleteBoutique } = useBoutiqueStore();
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchBoutiques();
   }, [fetchBoutiques]);
 
-    const handleDeleteClick = (boutique) => {
+  const handleDeleteClick = (boutique) => {
     setSelectedBoutique(boutique);
   };
 
-    const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async () => {
     if (!selectedBoutique) return;
     setIsDeleting(true);
     try {
       await deleteBoutique(selectedBoutique.hashid);
       setSelectedBoutique(null);
     } catch (err) {
-      console.error("Erreur suppression client:", err);
+      console.error("Erreur suppression boutique:", err);
     } finally {
       setIsDeleting(false);
     }
@@ -48,7 +51,6 @@ const Boutiques = () => {
   );
 
   const skeletonCount = boutiques?.length > 0 ? boutiques.length : 3;
-
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -283,9 +285,9 @@ const Boutiques = () => {
                     </div>
 
                     {/* Actions loading */}
-                    <div className="flex gap-2 pt-4 border-t border-emerald-100">
-                      <div className="flex-1 py-2 bg-emerald-200 rounded animate-pulse"></div>
-                      <div className="flex-1 py-2 bg-emerald-300 rounded animate-pulse"></div>
+                    <div className="flex gap-3 pt-4 border-t border-emerald-100">
+                      <div className="flex-1 py-2.5 bg-emerald-200 rounded-xl animate-pulse"></div>
+                      <div className="w-12 py-2.5 bg-emerald-300 rounded-xl animate-pulse"></div>
                     </div>
                   </div>
                 </motion.div>
@@ -392,23 +394,37 @@ const Boutiques = () => {
 
                     {/* Actions */}
                     <motion.div 
-                      className="flex gap-2 pt-4 border-t border-emerald-100"
+                      className="flex gap-3 pt-4 border-t border-emerald-100"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 + (index * 0.1) }}
                     >
                       <motion.button
-                        onClick={() => handleDeleteClick(boutique)}
-                        className="flex-1 py-2 text-red-600 hover:text-red-700 font-medium text-sm transition-colors duration-300 hover:bg-red-50 rounded-lg"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          navigate(`/boutiques/${boutique.hashid}/articles`, { 
+                            state: { boutiqueData: boutique } 
+                          });
+                        }}
+                        className="flex-1 py-2.5 bg-emerald-600 text-white font-medium text-sm transition-all duration-300 hover:bg-emerald-700 rounded-xl flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        Supprimer
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>Voir articles</span>
+                      </motion.button>
+                      
+                      <motion.button
+                        onClick={() => handleDeleteClick(boutique)}
+                        className="px-4 py-2.5 text-red-600 hover:text-red-700 font-medium text-sm transition-all duration-300 hover:bg-red-50 rounded-xl border border-red-200 flex items-center justify-center gap-2"
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="hidden sm:inline">Supprimer</span>
                       </motion.button>
                     </motion.div>
                   </div>
                 </motion.div>
-
               ))}
             </motion.div>
           )}
