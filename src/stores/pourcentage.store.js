@@ -2,7 +2,7 @@ import { pourcentageService } from "../services/pourcentage.service";
 import { create } from "zustand";
 
 const usePourcentageStore = create((set) => ({
-    pourcentage: null, // Correction: "pourcentage" au lieu de "pourcentatge"
+    pourcentage: null,
     loading: false,
     error: null,
 
@@ -12,7 +12,7 @@ const usePourcentageStore = create((set) => ({
         try {
             const response = await pourcentageService.readPourcentage();
             set({ 
-                pourcentage: response.data, // Correction: "pourcentage"
+                pourcentage: response.data,
                 loading: false 
             });
             return response;
@@ -25,13 +25,13 @@ const usePourcentageStore = create((set) => ({
         }
     },
 
-    updatePourcentage: async (newPourcentage) => { // Correction: "updatePourcentage" au lieu de "updatePourcenatge"
+    updatePourcentage: async (newPourcentage) => {
         set({ loading: true, error: null });
 
         try {
             const response = await pourcentageService.updatePourcentage(newPourcentage);
             set({
-                pourcentage: response.data, // Correction: "pourcentage"
+                pourcentage: response.data,
                 loading: false
             });
             return response;
