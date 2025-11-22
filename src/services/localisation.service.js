@@ -11,8 +11,7 @@ const getVilles = async () => {
         }
         return [];
     } catch (error) {
-        console.error("Erreur récupération villes:", error.response?.data || error.message);
-        throw error;
+        throw error.response?.data || error.message;
     }
 };
 
@@ -24,8 +23,7 @@ const ajouterVille = async (lib_ville) => {
         console.log("Réponse POST ville:", response.data);
         return response.data;
     } catch (error) {
-        console.error("Erreur ajout ville:", error.response?.data);
-        throw error;
+        throw error.response?.data || error.message;
     }
 };
 
@@ -37,8 +35,7 @@ const modifierVille = async (hashid, lib_ville) => {
         console.log("Réponse modification ville:", response.data);
         return response.data;
     } catch (error) {
-        console.error("Erreur modification ville:", error.response?.data);
-        throw error;
+        throw error.response?.data || error.message;
     }
 };
 
@@ -49,8 +46,7 @@ const supprimerVille = async (hashid) => {
         console.log("Réponse suppression ville:", response.data);
         return response.data;
     } catch (error) {
-        console.error("Erreur suppression ville:", error.response?.data);
-        throw error;
+        throw error.response?.data || error.message;
     }
 };
 
@@ -62,8 +58,7 @@ const ajouterCommune = async (lib_commune, id_ville_hash) => {
         console.log("Réponse POST commune:", response.data);
         return response.data;
     } catch (error) {
-        console.error("Erreur ajout commune:", error.response?.data);
-        throw error;
+        throw error.response?.data || error.message;
     }
 };
 
@@ -75,8 +70,7 @@ const modifierCommune = async (hashid, lib_commune, id_ville_hash) => {
         console.log("Réponse modification commune:", response.data);
         return response.data;
     } catch (error) {
-        console.error("Erreur modification commune:", error.response?.data);
-        throw error;
+        throw error.response?.data || error.message;
     }
 };
 
@@ -87,8 +81,7 @@ const supprimerCommune = async (hashid) => {
         console.log("Réponse suppression commune:", response.data);
         return response.data;
     } catch (error) {
-        console.error("Erreur suppression commune:", error.response?.data);
-        throw error;
+        throw error.response?.data || error.message;
     }
 };
 
@@ -108,8 +101,7 @@ const getCommunes = async () => {
         }
         return [];
     } catch (error) {
-        console.error("Erreur récupération communes:", error.response?.data || error.message);
-        throw error;
+        throw error.response?.data || error.message;
     }
 };
 
@@ -129,12 +121,7 @@ const getCommunesParVille = async (villeHashId) => {
         };
         
     } catch (error) {
-        console.error(`Erreur communes pour ${villeHashId}:`, error);
-        return {
-            ville: {},
-            hashid: villeHashId,
-            communes: []
-        };
+        throw error.response?.data || error.message;
     }
 };
 

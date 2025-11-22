@@ -5,7 +5,6 @@ const getCommandes = async () => {
         const response = await axiosInstance.get("/api/commandes");
         return response.data;
     } catch (error) {
-        console.error("Erreur lors de la récupération des commandes:", error);
         throw error.response?.data || error;
     }
 }
@@ -16,7 +15,6 @@ const filtrerCommandes = async (recherche = '') => {
         const response = await axiosInstance.get(`/api/commandes/filtre?recherche=${encodeURIComponent(recherche)}`);
         return response.data;
     } catch (error) {
-        console.error("Erreur lors du filtrage des commandes:", error);
         throw error.response?.data || error;
     }
 }
@@ -27,7 +25,6 @@ const annulerCommande = async (hashid) => {
         const response = await axiosInstance.post(`/api/commande/${hashid}/annule`);
         return response.data;
     } catch (error) {
-        console.error("Erreur lors de l'annulation de la commande:", error);
         throw error.response?.data || error;
     }
 }
@@ -38,7 +35,6 @@ const livrerCommande = async (hashid) => {
         const response = await axiosInstance.post(`/api/commande/${hashid}/livree`);
         return response.data;
     } catch (error) {
-        console.error("Erreur lors de la livraison de la commande:", error);
         throw error.response?.data || error;
     }
 }
@@ -49,7 +45,6 @@ const confirmerCommande = async (hashid) => {
         const response = await axiosInstance.post(`/api/commande/${hashid}/confirme`);
         return response.data;
     } catch (error) {
-        console.error("Erreur lors de la confirmation de la commande:", error);
         throw error.response?.data || error;
     }
 }
@@ -68,7 +63,6 @@ const changerStatutSousCommande = async (hashidCommande, hashidArticle, statut, 
         );
         return response.data;
     } catch (error) {
-        console.error("Erreur lors du changement de statut de la sous-commande:", error);
         throw error.response?.data || error;
     }
 }

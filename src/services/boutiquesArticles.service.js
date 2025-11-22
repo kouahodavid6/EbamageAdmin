@@ -5,7 +5,6 @@ const getArticlesByBoutique = async (boutiqueHashid) => {
         const response = await axiosInstance.get(`/api/articles/boutique/${boutiqueHashid}`);
         return response.data;
     } catch (error) {
-        console.error("Erreur lors de la récupération des articles de la boutique:", error);
         throw error.response?.data || error;
     }
 }
