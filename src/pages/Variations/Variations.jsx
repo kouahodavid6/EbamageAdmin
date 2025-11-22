@@ -12,6 +12,7 @@ const Variations = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [variationToDelete, setVariationToDelete] = useState(null);
+    const [variationToEdit, setVariationToEdit] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -24,6 +25,11 @@ const Variations = () => {
     const handleDeleteClick = (variation) => {
         setVariationToDelete(variation);
         setDeleteModalOpen(true);
+    };
+
+    const handleEditClick = (variation) => {
+        setVariationToEdit(variation);
+        setModalOpen(true);
     };
 
     const handleConfirmDelete = async () => {
@@ -42,6 +48,11 @@ const Variations = () => {
     const handleCancelDelete = () => {
         setDeleteModalOpen(false);
         setVariationToDelete(null);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setVariationToEdit(null);
     };
 
     const isColorVariation = (variation) => {
@@ -251,7 +262,7 @@ const Variations = () => {
                                                 <motion.button
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                                                     title="Modifier"
-                                                    onClick={() => {/* À implémenter quand disponible */}}
+                                                    onClick={() => handleEditClick(variation)}
                                                     whileHover={{ scale: 1.1 }}
                                                     whileTap={{ scale: 0.9 }}
                                                 >
@@ -337,8 +348,12 @@ const Variations = () => {
                 </main>
             </div>
 
-            {/* Modal ajout */}
-            <VariationModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+            {/* Modal ajout/modification */}
+            <VariationModal 
+                isOpen={modalOpen} 
+                onClose={handleCloseModal}
+                variationToEdit={variationToEdit}
+            />
 
             {/* Modal de confirmation de suppression */}
             <DeleteConfirmModal

@@ -1,21 +1,40 @@
-import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, X, Edit3 } from "lucide-react";
 import useVariationStore from "../../../stores/variation.store";
 
-const VariationModal = ({ isOpen, onClose }) => {
-    const { addVariation } = useVariationStore();
+const VariationModal = ({ isOpen, onClose, variationToEdit = null }) => {
+    const { addVariation, updateVariation } = useVariationStore();
     const [nom_variation, setNomVariation] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
+    // Reset form when modal opens/closes or when variationToEdit changes
+    useEffect(() => {
+        if (isOpen) {
+            if (variationToEdit) {
+                setNomVariation(variationToEdit.nom_variation === 'color' ? 'Couleur' : variationToEdit.nom_variation);
+            } else {
+                setNomVariation("");
+            }
+        }
+    }, [isOpen, variationToEdit]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!nom_variation.trim()) return;
 
         setIsLoading(true);
-        const payload = { nom_variation: nom_variation.trim() };
+        const payload = { 
+            nom_variation: variationToEdit && variationToEdit.nom_variation === 'color' 
+                ? 'color' 
+                : nom_variation.trim().toLowerCase() 
+        };
 
         try {
-            await addVariation(payload);
+            if (variationToEdit) {
+                await updateVariation(variationToEdit.hashid, payload);
+            } else {
+                await addVariation(payload);
+            }
             setNomVariation("");
             onClose();
         } catch (error) {
@@ -26,6 +45,9 @@ const VariationModal = ({ isOpen, onClose }) => {
     };
 
     if (!isOpen) return null;
+
+    const isEditMode = !!variationToEdit;
+    const isColorVariation = variationToEdit?.nom_variation === 'color';
 
     return (
         <div
@@ -46,15 +68,22 @@ const VariationModal = ({ isOpen, onClose }) => {
 
                 {/* Header avec style vert */}
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 rounded-full bg-green-100">
-                        <Plus className="w-5 h-5 text-green-600" />
+                    <div className={`p-2 rounded-full ${isEditMode ? 'bg-blue-100' : 'bg-green-100'}`}>
+                        {isEditMode ? (
+                            <Edit3 className="w-5 h-5 text-blue-600" />
+                        ) : (
+                            <Plus className="w-5 h-5 text-green-600" />
+                        )}
                     </div>
                     <div>
-                        <h2 className="text-xl font-semibold text-green-900">
-                            Nouvelle variation
+                        <h2 className={`text-xl font-semibold ${isEditMode ? 'text-blue-900' : 'text-green-900'}`}>
+                            {isEditMode ? 'Modifier la variation' : 'Nouvelle variation'}
                         </h2>
-                        <p className="text-green-600 text-sm mt-1">
-                            Créez un nouveau type de variation
+                        <p className={`text-sm mt-1 ${isEditMode ? 'text-blue-600' : 'text-green-600'}`}>
+                            {isEditMode 
+                                ? 'Modifiez le type de variation' 
+                                : 'Créez un nouveau type de variation'
+                            }
                         </p>
                     </div>
                 </div>
@@ -70,11 +99,25 @@ const VariationModal = ({ isOpen, onClose }) => {
                             onChange={(e) => setNomVariation(e.target.value)}
                             required
                             placeholder="Ex: Couleur, Taille, Matériau..."
-                            className="w-full border border-green-200 rounded-xl p-3 mt-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50/50 transition-colors placeholder-green-300 text-green-900"
-                            disabled={isLoading}
+                            className={`w-full border rounded-xl p-3 mt-1 focus:outline-none focus:ring-2 focus:border transition-colors placeholder-green-300 ${
+                                isEditMode 
+                                    ? 'border-blue-200 focus:ring-blue-500 focus:border-blue-500 bg-blue-50/50 text-blue-900' 
+                                    : 'border-green-200 focus:ring-green-500 focus:border-green-500 bg-green-50/50 text-green-900'
+                            }`}
+                            disabled={isLoading || isColorVariation}
                         />
-                        <p className="text-green-600 text-xs mt-2">
-                            Ce nom identifiera le type de variation dans votre boutique
+                        {isColorVariation && (
+                            <p className="text-amber-600 text-xs mt-2 font-medium">
+                                ⚠️ La variation "Couleur" est requise et ne peut pas être modifiée
+                            </p>
+                        )}
+                        <p className={`text-xs mt-2 ${
+                            isEditMode ? 'text-blue-600' : 'text-green-600'
+                        }`}>
+                            {isEditMode 
+                                ? 'Ce nom identifiera le type de variation dans votre boutique'
+                                : 'Ce nom identifiera le type de variation dans votre boutique'
+                            }
                         </p>
                     </div>
 
@@ -89,16 +132,20 @@ const VariationModal = ({ isOpen, onClose }) => {
                         </button>
                         <button
                             type="submit"
-                            disabled={isLoading || !nom_variation.trim()}
-                            className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            disabled={isLoading || !nom_variation.trim() || isColorVariation}
+                            className={`px-6 py-3 text-white rounded-xl focus:ring-2 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                                isEditMode
+                                    ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 shadow-lg shadow-blue-500/25'
+                                    : 'bg-green-600 hover:bg-green-700 focus:ring-green-500 shadow-lg shadow-green-500/25'
+                            }`}
                         >
                             {isLoading ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    Création...
+                                    {isEditMode ? 'Modification...' : 'Création...'}
                                 </>
                             ) : (
-                                "Créer"
+                                isEditMode ? 'Modifier' : 'Créer'
                             )}
                         </button>
                     </div>

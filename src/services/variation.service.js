@@ -25,6 +25,22 @@ const listerVariations = async () => {
     }
 };
 
+const modifierVariation = async (hashid, data) => {
+    try {
+        console.log("Modification variation:", { hashid, data });
+        const response = await axiosInstance.post(`/api/update/variation/${hashid}`, data);
+        console.log("Réponse modification:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Erreur modification:", {
+            status: error.response?.status,
+            data: error.response?.data,
+            headers: error.response?.headers
+        });
+        throw error.response?.data || error;
+    }
+};
+
 const supprimerVariation = async (hashid) => {
     try {
         const response = await axiosInstance.post(`/api/variation/${hashid}/delete`);
@@ -37,7 +53,8 @@ const supprimerVariation = async (hashid) => {
 const VariationService = {
     ajouterVariation,
     listerVariations,
-    supprimerVariation,
+    modifierVariation,
+    supprimerVariation
 };
 
 export default VariationService;

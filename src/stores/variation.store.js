@@ -30,6 +30,22 @@ const useVariationStore = create((set) => ({
         }
     },
 
+    updateVariation: async (hashid, data) => {
+        try {
+            const res = await VariationService.modifierVariation(hashid, data);
+            toast.success(res.message || "Variation modifiée !");
+            set((state) => ({
+                variations: state.variations.map(v => 
+                    v.hashid === hashid ? { ...v, ...res.data } : v
+                ),
+            }));
+            return { success: true, data: res.data };
+        } catch (error) {
+            toast.error(error.message || "Erreur lors de la modification.");
+            return { success: false, error };
+        }
+    },
+
     deleteVariation: async (hashid) => {
         try {
             const res = await VariationService.supprimerVariation(hashid);
