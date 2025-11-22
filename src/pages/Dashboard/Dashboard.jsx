@@ -14,6 +14,7 @@ import {
   Upload,
   X,
   Trash2,
+  Percent,
 } from "lucide-react";
 import useCommandeStore from "../../stores/commande.store";
 import useBoutiqueStore from "../../stores/boutique.store";
@@ -22,6 +23,7 @@ import useCategorieStore from "../../stores/categorie.store";
 import usePubliciteStore from "../../stores/publicites.store";
 import useLivraisonStore from "../../stores/livraison.store";
 import useNotificationStore from "../../stores/notifications.store";
+import usePourcentageStore from "../../stores/pourcentage.store"; // NOUVEAU IMPORT
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -34,7 +36,8 @@ const Dashboard = () => {
     stats: true,
     boutiques: true,
     clients: true,
-    livraison: true
+    livraison: true,
+    pourcentage: true // NOUVEAU
   });
 
   const [selectedImage, setSelectedImage] = useState(null);
@@ -42,7 +45,8 @@ const Dashboard = () => {
   
   const [modalOpen, setModalOpen] = useState({
     prix: false,
-    seuil: false
+    seuil: false,
+    pourcentage: false // NOUVEAU
   });
 
   // Stores
@@ -69,10 +73,19 @@ const Dashboard = () => {
     error: livraisonError 
   } = useLivraisonStore();
 
+  // NOUVEAU STORE POUR POURCENTAGE
+  const { 
+    pourcentage, 
+    readPourcentage, 
+    updatePourcentage,
+    loading: pourcentageLoading,
+    error: pourcentageError 
+  } = usePourcentageStore();
+
   // Store des notifications
   const { updateUnreadCount } = useNotificationStore();
 
-  // Formatage de date - AJOUTÉ
+  // Formatage de date
   const formatDate = (dateString) => {
     if (!dateString) return "Date inconnue";
     try {
@@ -91,7 +104,8 @@ const Dashboard = () => {
           stats: true,
           boutiques: true,
           clients: true,
-          livraison: true
+          livraison: true,
+          pourcentage: true
         });
 
         await Promise.all([
@@ -101,13 +115,15 @@ const Dashboard = () => {
           fetchCategories(),
           fetchPrixLivraison(),
           fetchSeuilLivraison(),
+          readPourcentage(), // NOUVEAU
         ]);
 
         setLoading({
           stats: false,
           boutiques: false,
           clients: false,
-          livraison: false
+          livraison: false,
+          pourcentage: false
         });
       } catch (error) {
         console.error("Erreur chargement données:", error);
@@ -116,13 +132,22 @@ const Dashboard = () => {
           stats: false,
           boutiques: false,
           clients: false,
-          livraison: false
+          livraison: false,
+          pourcentage: false
         });
       }
     };
 
     loadData();
-  }, [fetchCommandes, fetchBoutiques, fetchClients, fetchCategories, fetchPrixLivraison, fetchSeuilLivraison]);
+  }, [
+    fetchCommandes, 
+    fetchBoutiques, 
+    fetchClients, 
+    fetchCategories, 
+    fetchPrixLivraison, 
+    fetchSeuilLivraison,
+    readPourcentage // NOUVEAU
+  ]);
 
   // Mettre à jour le compteur de notifications
   useEffect(() => {
@@ -145,7 +170,10 @@ const Dashboard = () => {
     if (livraisonError) {
       toast.error(livraisonError);
     }
-  }, [publiciteSuccess, publiciteError, livraisonError, clearState]);
+    if (pourcentageError) { // NOUVEAU
+      toast.error(pourcentageError);
+    }
+  }, [publiciteSuccess, publiciteError, livraisonError, pourcentageError, clearState]);
 
   // Fonctions pour les modales
   const openModal = (type) => {
@@ -169,6 +197,16 @@ const Dashboard = () => {
     try {
       await updateSeuilLivraison(nouveauSeuil);
       toast.success('Seuil de livraison gratuite modifié avec succès !');
+    } catch (error) {
+      // L'erreur est déjà gérée par le store
+    }
+  };
+
+  // NOUVELLE FONCTION POUR MODIFIER LE POURCENTAGE
+  const handleModifierPourcentage = async (nouveauPourcentage) => {
+    try {
+      await updatePourcentage(nouveauPourcentage);
+      toast.success('Pourcentage modifié avec succès !');
     } catch (error) {
       // L'erreur est déjà gérée par le store
     }
@@ -254,7 +292,7 @@ const Dashboard = () => {
     tap: { scale: 0.95, transition: { duration: 0.1 } }
   };
 
-  // Configuration des cartes d'actions
+  // Configuration des cartes d'actions - NOUVELLE CARTE AJOUTÉE
   const actionsPages = () => {
     return [
       {
@@ -286,6 +324,18 @@ const Dashboard = () => {
         borderColor: "border-emerald-200",
         valeur: seuilLivraisonGratuite ? `${seuilLivraisonGratuite.toLocaleString("fr-FR")} FCFA` : "Chargement...",
         description: "Modifier le seuil",
+        isLink: false
+      },
+      // NOUVELLE CARTE POUR POURCENTAGE
+      {
+        title: "Pourcentage de réduction",
+        icon: Percent,
+        onClick: () => openModal('pourcentage'),
+        color: "bg-emerald-100",
+        textColor: "text-emerald-600",
+        borderColor: "border-emerald-200",
+        valeur: pourcentage || "Chargement...",
+        description: "Modifier le pourcentage",
         isLink: false
       },
       {
@@ -441,15 +491,15 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* Cartes d'actions rapides */}
+          {/* Cartes d'actions rapides - MAINTENANT 5 CARTES */}
           <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6" // Changé en 5 colonnes
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
             {loading.stats ? (
-              Array(4).fill(0).map((_, index) => (
+              Array(5).fill(0).map((_, index) => ( // Changé en 5
                 <motion.div
                   key={index}
                   className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100/60 p-6"
@@ -495,7 +545,6 @@ const Dashboard = () => {
                     Supprimer
                   </motion.button>
                 )}
-                {/* NOUVEAU BOUTON POUR VOIR LES PUBLICITÉS */}
                 <Link to="/publicites">
                   <motion.button
                     className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm flex items-center gap-2 transition-all duration-300"
@@ -586,12 +635,12 @@ const Dashboard = () => {
 
               {/* Informations de l'image */}
               {selectedImage && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-blue-800 font-medium text-sm">
+                    <p className="text-emerald-800 font-medium text-sm">
                       1 image sélectionnée
                     </p>
-                    <p className="text-blue-600/80 text-xs">
+                    <p className="text-emerald-600/80 text-xs">
                       Taille: {(selectedImage.size / (1024 * 1024)).toFixed(2)} MB
                     </p>
                   </div>
@@ -657,6 +706,16 @@ const Dashboard = () => {
         valeurActuelle={seuilLivraisonGratuite}
         onModifier={handleModifierSeuil}
         loading={livraisonLoading}
+      />
+
+      {/* NOUVELLE MODALE POUR POURCENTAGE */}
+      <ModifierPrixModal
+        isOpen={modalOpen.pourcentage}
+        onClose={() => closeModal('pourcentage')}
+        type="pourcentage"
+        valeurActuelle={pourcentage ? parseInt(pourcentage.replace('%', '')) : 0}
+        onModifier={handleModifierPourcentage}
+        loading={pourcentageLoading}
       />
     </div>
   );

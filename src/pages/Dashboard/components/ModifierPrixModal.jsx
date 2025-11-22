@@ -1,7 +1,7 @@
 // components/ModifierPrixModal.jsx
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { X, Package } from "lucide-react";
+import { X, Package, Percent } from "lucide-react";
 
 const ModifierPrixModal = ({ 
     isOpen, 
@@ -14,7 +14,7 @@ const ModifierPrixModal = ({
     const [nouvelleValeur, setNouvelleValeur] = useState("");
 
     useEffect(() => {
-        if (isOpen && valeurActuelle) {
+        if (isOpen && valeurActuelle !== undefined && valeurActuelle !== null) {
             setNouvelleValeur(valeurActuelle.toString());
         }
     }, [isOpen, valeurActuelle]);
@@ -48,14 +48,41 @@ const ModifierPrixModal = ({
         prix: {
             title: "Modifier le prix de livraison",
             label: "Prix de livraison (FCFA)",
-            placeholder: "Entrez le nouveau prix de livraison"
+            placeholder: "Entrez le nouveau prix de livraison",
+            icon: Package,
+            color: "emerald",
+            suffix: "FCFA",
+            formatValue: (val) => val?.toLocaleString("fr-FR")
         },
         seuil: {
             title: "Modifier le seuil de livraison gratuite",
             label: "Seuil de livraison gratuite (FCFA)",
-            placeholder: "Entrez le nouveau seuil pour la livraison gratuite"
+            placeholder: "Entrez le nouveau seuil pour la livraison gratuite",
+            icon: Package,
+            color: "emerald",
+            suffix: "FCFA",
+            formatValue: (val) => val?.toLocaleString("fr-FR")
+        },
+        pourcentage: {
+            title: "Modifier le pourcentage de réduction",
+            label: "Pourcentage de réduction (%)",
+            placeholder: "Entrez le nouveau pourcentage",
+            icon: Percent,
+            color: "emerald",
+            suffix: "%",
+            formatValue: (val) => val ? `${val}%` : "0%"
         }
     }[type];
+
+    const colorClasses = {
+        emerald: {
+            bg: "bg-emerald-100",
+            text: "text-emerald-600",
+            border: "border-emerald-200",
+            focus: "focus:ring-emerald-500 focus:border-emerald-500",
+            inputBg: "bg-emerald-50/50"
+        },
+    }[config.color];
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
@@ -66,12 +93,12 @@ const ModifierPrixModal = ({
                 className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
             >
                 {/* En-tête */}
-                <div className="flex items-center justify-between p-6 border-b border-emerald-100">
+                <div className={`flex items-center justify-between p-6 border-b ${colorClasses.border}`}>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-100 rounded-xl">
-                            <Package className="w-5 h-5 text-emerald-600" />
+                        <div className={`p-2 ${colorClasses.bg} rounded-xl`}>
+                            <config.icon className={`w-5 h-5 ${colorClasses.text}`} />
                         </div>
-                        <h2 className="text-lg font-semibold text-emerald-900">
+                        <h2 className="text-lg font-semibold text-gray-900">
                             {config.title}
                         </h2>
                     </div>
@@ -86,7 +113,7 @@ const ModifierPrixModal = ({
                 {/* Contenu */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-emerald-700 mb-2">
+                        <label className={`block text-sm font-medium ${colorClasses.text} mb-2`}>
                             {config.label}
                         </label>
                         <input
@@ -94,13 +121,21 @@ const ModifierPrixModal = ({
                             value={nouvelleValeur}
                             onChange={(e) => setNouvelleValeur(e.target.value)}
                             placeholder={config.placeholder}
-                            className="w-full px-4 py-3 border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-emerald-50/50"
+                            className={`w-full px-4 py-3 border ${colorClasses.border} rounded-xl focus:outline-none focus:ring-2 ${colorClasses.focus} transition-all duration-200 ${colorClasses.inputBg}`}
                             min="0"
+                            max={type === 'pourcentage' ? 100 : undefined}
                             required
                         />
-                        <p className="text-sm text-emerald-600 mt-2">
-                            Valeur actuelle: <span className="font-semibold">{valeurActuelle?.toLocaleString("fr-FR")} FCFA</span>
+                        <p className={`text-sm ${colorClasses.text} mt-2`}>
+                            Valeur actuelle: <span className="font-semibold">
+                                {config.formatValue ? config.formatValue(valeurActuelle) : valeurActuelle} {config.suffix}
+                            </span>
                         </p>
+                        {type === 'pourcentage' && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                Le pourcentage doit être compris entre 0 et 100%
+                            </p>
+                        )}
                     </div>
 
                     {/* Actions */}
@@ -108,7 +143,7 @@ const ModifierPrixModal = ({
                         <button
                             type="button"
                             onClick={handleClose}
-                            className="flex-1 px-4 py-3 text-emerald-600 font-medium bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all duration-200 border border-emerald-200"
+                            className={`flex-1 px-4 py-3 ${colorClasses.text} font-medium ${colorClasses.bg} hover:opacity-80 rounded-xl transition-all duration-200 border ${colorClasses.border}`}
                             disabled={loading}
                         >
                             Annuler
@@ -116,7 +151,11 @@ const ModifierPrixModal = ({
                         <button
                             type="submit"
                             disabled={loading || !nouvelleValeur || isNaN(nouvelleValeur)}
-                            className="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium rounded-xl transition-all duration-200 disabled:cursor-not-allowed"
+                            className={`flex-1 px-4 py-3 bg-gradient-to-r ${
+                                type === 'pourcentage' 
+                                    ? 'from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700' 
+                                    : 'from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
+                            } disabled:from-gray-400 disabled:to-gray-500 text-white font-medium rounded-xl transition-all duration-200 disabled:cursor-not-allowed`}
                         >
                             {loading ? (
                                 <div className="flex items-center justify-center gap-2">
