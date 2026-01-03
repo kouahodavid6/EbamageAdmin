@@ -203,12 +203,12 @@ const Login = () => {
             >
                 <p className="text-center text-sm text-emerald-700">
                     Problème de connexion ?{" "}
-                    <Link
-                        to="/contact"
-                        className="font-semibold text-emerald-600 hover:text-emerald-800 underline transition-colors duration-300"
+                    <span 
+                        className="font-semibold text-emerald-600 hover:text-emerald-800 underline transition-colors duration-300 cursor-pointer"
+                        onClick={() => window.open('https://wa.me/2250171136261')}
                     >
                         Contacter le support technique
-                    </Link>
+                    </span>
                 </p>
             </motion.div>
 
