@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/Input";
-import { Shield, AlertCircle, Lock } from "lucide-react";
+import { Shield, AlertCircle, Lock, KeyRound } from "lucide-react";
 import { useState } from "react";
 import useAuthStore from "../../stores/auth.store";
-import ContainerForms from "./components/ContainerForms";
+import ContainerForms from "../components/ContainerForms";
 import { motion } from "framer-motion";
 
 const Login = () => {
@@ -131,6 +131,26 @@ const Login = () => {
                         />
                     </motion.div>
                 </div>
+
+                {/* Lien Mot de passe oublié (version sous le bouton) */}
+                <motion.div 
+                    className="text-right"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                >
+                    <motion.div
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        <Link
+                            to="/forgot-password"
+                            className="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-800 transition-colors duration-300"
+                        >
+                            <KeyRound className="w-4 h-4 mr-2" />
+                            Mot de passe oublié ?
+                        </Link>
+                    </motion.div>
+                </motion.div>
 
                 {/* Affichage des erreurs générales */}
                 {error && (

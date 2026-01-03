@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect } from 'react';
 
 import Login from './pages/Auth/Login';
+import ForgotPassword from './pages/SystemeMDPForgot/ForgotPassword';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Notifications from "./pages/Notifications/Notifications"
 import Activites from './pages/Activités/Activites';
@@ -85,6 +86,16 @@ function App() {
               element={
                 <PublicRoute>
                   <Login />
+                </PublicRoute>
+              } 
+            />
+
+            {/* Route publique - Mot de passe oublié */}
+            <Route 
+              path="/forgot-password" 
+              element={
+                <PublicRoute>
+                  <ForgotPassword />
                 </PublicRoute>
               } 
             />
