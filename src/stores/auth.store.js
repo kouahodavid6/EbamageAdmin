@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { authService } from "../services/auth.service";
 
-// Récupérer l'admin depuis localStorage si existe
 const getInitialAdmin = () => {
     try {
         const user = localStorage.getItem("user");
@@ -21,6 +20,7 @@ const useAuthStore = create((set) => ({
     loading: false,
     error: null,
     showError: false,
+    isAuthenticated: !!localStorage.getItem("admin_token"),
 
     setError: (error) => set({ error, showError: true }),
     clearError: () => set({ error: null, showError: false }),
@@ -33,10 +33,17 @@ const useAuthStore = create((set) => ({
             const { data, token } = response.data;
             const adminData = { ...data, token };
 
-            // Stocker dans localStorage
             localStorage.setItem("user", JSON.stringify(adminData));
+            if (!localStorage.getItem("admin_token")) {
+                localStorage.setItem("admin_token", token);
+            }
             
-            set({ admin: adminData, loading: false, error: null });
+            set({ 
+                admin: adminData, 
+                loading: false, 
+                error: null,
+                isAuthenticated: true
+            });
 
             return response.data;
         }
@@ -49,11 +56,19 @@ const useAuthStore = create((set) => ({
 
     logout: () => {
         authService.logout();
-        set({ admin: null, error: null, showError: false });
+        set({ 
+            admin: null, 
+            error: null, 
+            showError: false,
+            isAuthenticated: false
+        });
     },
 
-    isAuthenticated: () => {
-        return !!localStorage.getItem("admin_token");
+    checkAuth: () => {
+        const token = localStorage.getItem("admin_token");
+        const isAuth = !!token;
+        set({ isAuthenticated: isAuth });
+        return isAuth;
     }
 }));
 

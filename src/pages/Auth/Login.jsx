@@ -5,6 +5,7 @@ import { useState } from "react";
 import useAuthStore from "../../stores/auth.store";
 import ContainerForms from "../components/ContainerForms";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -26,15 +27,23 @@ const Login = () => {
         clearError();
 
         try {
-            const res = await login(formData);
-            console.log("Connexion réussie :", res);
-            navigate("/dashboard");
+            await login(formData);
+            
+            toast.success("Connexion réussie ! Redirection en cours...", {
+                duration: 3000,
+            });
+            
+            setTimeout(() => {
+                navigate("/dashboard");
+            }, 1000);
+            
         } catch (error) {
-            console.error("Erreur lors de la connexion :", error);
+            toast.error(error.message || "Échec de connexion. Vérifiez vos identifiants.", {
+                duration: 4000,
+            });
         }
     };
 
-    // Variants d'animation
     const buttonVariants = {
         hover: {
             scale: 1.05,
@@ -55,7 +64,6 @@ const Login = () => {
 
     return (
         <ContainerForms>
-            {/* HEADER */}
             <motion.div 
                 className="w-full flex flex-col items-center py-6"
                 initial={{ opacity: 0 }}
@@ -78,7 +86,6 @@ const Login = () => {
                 </p>
             </motion.div>
 
-            {/* FORMULAIRE */}
             <motion.form 
                 onSubmit={handleSubmit} 
                 className="mt-8 space-y-6"
@@ -86,7 +93,6 @@ const Login = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
             >
-                {/* Email */}
                 <div>
                     <label htmlFor="email" className="block text-sm font-semibold text-emerald-800 mb-2">
                         Email administrateur <span className="text-red-500">*</span>
@@ -109,7 +115,6 @@ const Login = () => {
                     </motion.div>
                 </div>
 
-                {/* Password */}
                 <div>
                     <label htmlFor="password" className="block text-sm font-semibold text-emerald-800 mb-2">
                         Mot de passe <span className="text-red-500">*</span>
@@ -132,16 +137,13 @@ const Login = () => {
                     </motion.div>
                 </div>
 
-                {/* Lien Mot de passe oublié (version sous le bouton) */}
                 <motion.div 
                     className="text-right"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
                 >
-                    <motion.div
-                        whileTap={{ scale: 0.95 }}
-                    >
+                    <motion.div whileTap={{ scale: 0.95 }}>
                         <Link
                             to="/forgot-password"
                             className="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-800 transition-colors duration-300"
@@ -152,7 +154,6 @@ const Login = () => {
                     </motion.div>
                 </motion.div>
 
-                {/* Affichage des erreurs générales */}
                 {error && (
                     <motion.div 
                         className="p-4 bg-red-50 border border-red-200 rounded-xl"
@@ -167,7 +168,6 @@ const Login = () => {
                     </motion.div>
                 )}
 
-                {/* Bouton de soumission */}
                 <motion.button
                     type="submit"
                     disabled={loading}
@@ -194,7 +194,6 @@ const Login = () => {
                 </motion.button>
             </motion.form>
 
-            {/* LIEN SUPPORT */}
             <motion.div 
                 className="mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100"
                 initial={{ opacity: 0 }}
@@ -212,7 +211,6 @@ const Login = () => {
                 </p>
             </motion.div>
 
-            {/* INDICATEUR DE SÉCURITÉ */}
             <motion.div 
                 className="mt-4 text-center"
                 initial={{ opacity: 0 }}

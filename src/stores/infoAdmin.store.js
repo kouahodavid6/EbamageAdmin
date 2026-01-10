@@ -10,7 +10,7 @@ const useAdminInfoStore = create((set) => ({
         set({ loading: true });
         try {
             const data = await InfoAdmin.getAdminInfo();
-            set({ admin: data }); // ✅ données déjà extraites
+            set({ admin: data });
         } catch (error) {
             console.error("Erreur fetchAdminInfo:", error);
             toast.error(error.message || "Erreur lors du chargement des informations");

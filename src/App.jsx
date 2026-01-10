@@ -22,31 +22,46 @@ import useAuthStore from './stores/auth.store';
 
 import NotFound from './components/NotFound';
 
-// Composant pour protéger les routes
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+  
+  useEffect(() => {
+    checkAuth?.();
+  }, [checkAuth]);
+  
+  if (isAuthenticated === undefined) {
+    return <div className="flex items-center justify-center h-screen">Chargement...</div>;
+  }
   
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
-// Composant pour les routes publiques (comme login)
 const PublicRoute = ({ children }) => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+  
+  useEffect(() => {
+    checkAuth?.();
+  }, [checkAuth]);
+  
+  if (isAuthenticated === undefined) {
+    return <div className="flex items-center justify-center h-screen">Chargement...</div>;
+  }
   
   return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
 };
 
 function App() {
-  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
 
   useEffect(() => {
-    initializeAuth;
-  }, [initializeAuth]);
+    checkAuth?.();
+  }, [checkAuth]);
 
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
-        {/* Notifications toast */}
         <Toaster
           position="top-right"
           toastOptions={{
@@ -80,7 +95,6 @@ function App() {
 
         <main>
           <Routes>
-            {/* Route publique - Login */}
             <Route 
               path="/login" 
               element={
@@ -90,7 +104,6 @@ function App() {
               } 
             />
 
-            {/* Route publique - Mot de passe oublié */}
             <Route 
               path="/forgot-password" 
               element={
@@ -100,10 +113,8 @@ function App() {
               } 
             />
 
-            {/* Redirection par défaut vers login */}
             <Route path="/" element={<Navigate to="/login" replace />} />
 
-            {/* Routes protégées */}
             <Route 
               path="/dashboard" 
               element={
@@ -192,7 +203,6 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-
             <Route 
               path="/portefeuilles" 
               element={
@@ -201,7 +211,6 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-
             <Route 
               path="/publicites" 
               element={

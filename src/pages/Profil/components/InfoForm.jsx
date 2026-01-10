@@ -6,10 +6,12 @@ import useAdminInfoStore from "../../../stores/infoAdmin.store";
 const InfoForm = ({ admin, loading }) => {
     const [formData, setFormData] = useState({
         nom: "",
+        tel: "",
         email: "",
     });
     const [initialData, setInitialData] = useState({
         nom: "",
+        tel: "",
         email: "",
     });
     const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +25,7 @@ const InfoForm = ({ admin, loading }) => {
         if (admin) {
             const newData = {
                 nom: admin.nom || "",
+                tel: admin.tel || "",
                 email: admin.email || "",
             };
             setFormData(newData);
@@ -34,6 +37,7 @@ const InfoForm = ({ admin, loading }) => {
     useEffect(() => {
         const formChanged =
             formData.nom !== initialData.nom ||
+            formData.tel !== initialData.tel ||
             formData.email !== initialData.email;
         setHasChanges(formChanged);
     }, [formData, initialData]);
@@ -115,6 +119,15 @@ const InfoForm = ({ admin, loading }) => {
 
                     <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                         <label className="block text-sm font-medium text-green-700 mb-1">
+                            Téléphone
+                        </label>
+                        <p className="text-green-900 font-semibold">
+                            {formData.tel || "—"}
+                        </p>
+                    </div>
+
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                        <label className="block text-sm font-medium text-green-700 mb-1">
                             Email
                         </label>
                         <p className="text-green-900 font-semibold">
@@ -141,6 +154,28 @@ const InfoForm = ({ admin, loading }) => {
                                 required
                                 className="w-full px-4 py-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50/50 transition-colors"
                                 placeholder="Nom complet"
+                                variants={inputVariants}
+                                whileFocus="focus"
+                            />
+                        )}
+                    </div>
+
+                    {/* Champ Téléphone */}
+                    <div>
+                        <label className="block text-sm font-medium text-green-700 mb-2">
+                            Téléphone
+                        </label>
+                        {loading ? (
+                            <div className="h-12 bg-green-100 rounded-xl animate-pulse"></div>
+                        ) : (
+                            <motion.input
+                                type="tel"
+                                name="tel"
+                                value={formData.tel}
+                                onChange={handleChange}
+                                required
+                                className="w-full px-4 py-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50/50 transition-colors"
+                                placeholder="0101010101"
                                 variants={inputVariants}
                                 whileFocus="focus"
                             />

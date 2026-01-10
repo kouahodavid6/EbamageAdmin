@@ -5,12 +5,14 @@ const loginAdmin = async (credentials) => {
 
     if (response.data.token) {
         localStorage.setItem("admin_token", response.data.token);
+        if (response.data.data) {
+            localStorage.setItem("user", JSON.stringify(response.data.data));
+        }
     }
 
     return response;
 }
 
-// Nouvelle méthode pour la demande de réinitialisation
 const requestPasswordReset = async (email) => {
     const response = await axiosInstance.post("/api/demande/reinitialisation/password", {
         email
@@ -18,7 +20,6 @@ const requestPasswordReset = async (email) => {
     return response;
 }
 
-// Nouvelle méthode pour vérifier l'OTP
 const verifyResetToken = async (email, otp) => {
     const response = await axiosInstance.post("/api/verification/token/password", {
         email,
@@ -27,7 +28,6 @@ const verifyResetToken = async (email, otp) => {
     return response;
 }
 
-// Nouvelle méthode pour réinitialiser le mot de passe
 const resetPassword = async (email, password, password_confirmation) => {
     const response = await axiosInstance.post("/api/reinitialisation/password", {
         email,
